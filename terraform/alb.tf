@@ -19,7 +19,7 @@ resource "aws_lb" "main" {
 
 # Target Group for Posts Service
 resource "aws_lb_target_group" "posts" {
-  name        = "${var.project_name}-posts-tg-${var.environment}"
+  name        = "forum-ms-posts-tg-${var.environment}"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -46,7 +46,7 @@ resource "aws_lb_target_group" "posts" {
 
 # Target Group for Threads Service
 resource "aws_lb_target_group" "threads" {
-  name        = "${var.project_name}-threads-tg-${var.environment}"
+  name        = "forum-ms-threads-tg-${var.environment}"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -73,7 +73,7 @@ resource "aws_lb_target_group" "threads" {
 
 # Target Group for Users Service
 resource "aws_lb_target_group" "users" {
-  name        = "${var.project_name}-users-tg-${var.environment}"
+  name        = "forum-ms-users-tg-${var.environment}"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
