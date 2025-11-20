@@ -65,21 +65,6 @@ output "public_subnet_ids" {
   value       = aws_subnet.public[*].id
 }
 
-output "codepipeline_posts_name" {
-  description = "Name of the Posts CodePipeline"
-  value       = aws_codepipeline.posts.name
-}
-
-output "codepipeline_threads_name" {
-  description = "Name of the Threads CodePipeline"
-  value       = aws_codepipeline.threads.name
-}
-
-output "codepipeline_users_name" {
-  description = "Name of the Users CodePipeline"
-  value       = aws_codepipeline.users.name
-}
-
 output "cloudwatch_log_group" {
   description = "CloudWatch Log Group for ECS tasks"
   value       = aws_cloudwatch_log_group.ecs.name
