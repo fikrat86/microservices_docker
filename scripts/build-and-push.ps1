@@ -58,14 +58,27 @@ function Build-And-Push-Service {
     
     # Check if repository exists, create if it doesn't
     Write-Host "Checking if ECR repository exists..." -ForegroundColor Yellow
-    $repoExists = aws ecr describe-repositories --repository-names $repoName --region $Region 2>$null
-    
-    if (-not $repoExists) {
+    try {
+        $checkRepo = aws ecr describe-repositories --repository-names $repoName --region $Region 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✓ Repository exists" -ForegroundColor Green
+        } else {
+            throw "Repository not found"
+        }
+    } catch {
         Write-Host "Repository does not exist. Creating..." -ForegroundColor Yellow
-        aws ecr create-repository --repository-name $repoName --region $Region
-        Write-Host "✓ Repository created" -ForegroundColor Green
-    } else {
-        Write-Host "✓ Repository exists" -ForegroundColor Green
+        try {
+            aws ecr create-repository `
+                --repository-name $repoName `
+                --region $Region `
+                --image-scanning-configuration scanOnPush=true `
+                --encryption-configuration encryptionType=AES256 | Out-Null
+            Write-Host "✓ Repository created" -ForegroundColor Green
+        } catch {
+            Write-Host "✗ Failed to create repository. It may already exist or you need permissions." -ForegroundColor Red
+            Write-Host "Note: If using Terraform, deploy infrastructure first with: .\scripts\deploy.ps1 -Action apply" -ForegroundColor Yellow
+            exit 1
+        }
     }
     
     # Build Docker image

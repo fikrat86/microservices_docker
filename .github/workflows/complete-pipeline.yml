@@ -1,0 +1,405 @@
+name: Complete Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy_infrastructure:
+        description: 'Deploy Terraform infrastructure'
+        required: false
+        type: boolean
+        default: false
+      build_all_images:
+        description: 'Build all Docker images (ignore path filters)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY_PREFIX: forum-microservices
+  ECS_CLUSTER: forum-microservices-cluster
+
+jobs:
+  # Job 1: Detect changes
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      posts: ${{ steps.filter.outputs.posts }}
+      threads: ${{ steps.filter.outputs.threads }}
+      users: ${{ steps.filter.outputs.users }}
+      terraform: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            posts:
+              - 'posts/**'
+            threads:
+              - 'threads/**'
+            users:
+              - 'users/**'
+            terraform:
+              - 'terraform/**'
+
+  # Job 2: Build and Push Docker Images
+  build-and-push-posts:
+    name: Build & Push Posts Service
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.posts == 'true' || github.event.inputs.build_all_images == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push Posts image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ env.ECR_REGISTRY_PREFIX }}/posts
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./posts
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "✓ Posts image pushed successfully"
+
+  build-and-push-threads:
+    name: Build & Push Threads Service
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.threads == 'true' || github.event.inputs.build_all_images == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push Threads image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ env.ECR_REGISTRY_PREFIX }}/threads
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./threads
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "✓ Threads image pushed successfully"
+
+  build-and-push-users:
+    name: Build & Push Users Service
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.users == 'true' || github.event.inputs.build_all_images == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push Users image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ env.ECR_REGISTRY_PREFIX }}/users
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./users
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+        echo "✓ Users image pushed successfully"
+
+  # Job 3: Deploy Infrastructure with Terraform
+  deploy-infrastructure:
+    name: Deploy Terraform Infrastructure
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true' || github.event.inputs.deploy_infrastructure == 'true'
+    defaults:
+      run:
+        working-directory: ./terraform
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Validate
+      run: terraform validate
+
+    - name: Terraform Plan
+      run: terraform plan -out=tfplan
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+
+    - name: Save Infrastructure Outputs
+      id: outputs
+      run: |
+        echo "alb_url=$(terraform output -raw alb_url)" >> $GITHUB_OUTPUT
+        echo "ecs_cluster=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_OUTPUT
+
+    - name: Display Deployment Info
+      run: |
+        echo "### Infrastructure Deployed Successfully! 🚀" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Load Balancer URL:** ${{ steps.outputs.outputs.alb_url }}" >> $GITHUB_STEP_SUMMARY
+        echo "**ECS Cluster:** ${{ steps.outputs.outputs.ecs_cluster }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Service Endpoints:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Posts: ${{ steps.outputs.outputs.alb_url }}/api/posts" >> $GITHUB_STEP_SUMMARY
+        echo "- Threads: ${{ steps.outputs.outputs.alb_url }}/api/threads" >> $GITHUB_STEP_SUMMARY
+        echo "- Users: ${{ steps.outputs.outputs.alb_url }}/api/users" >> $GITHUB_STEP_SUMMARY
+
+  # Job 4: Deploy Services to ECS
+  deploy-posts:
+    name: Deploy Posts to ECS
+    runs-on: ubuntu-latest
+    needs: [build-and-push-posts, deploy-infrastructure]
+    if: |
+      always() &&
+      (needs.build-and-push-posts.result == 'success' || needs.build-and-push-posts.result == 'skipped') &&
+      (needs.deploy-infrastructure.result == 'success' || needs.deploy-infrastructure.result == 'skipped')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition \
+          --task-definition posts-service-task \
+          --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: posts
+        image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REGISTRY_PREFIX }}/posts:${{ github.sha }}
+
+    - name: Deploy to ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: posts-service
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
+
+  deploy-threads:
+    name: Deploy Threads to ECS
+    runs-on: ubuntu-latest
+    needs: [build-and-push-threads, deploy-infrastructure]
+    if: |
+      always() &&
+      (needs.build-and-push-threads.result == 'success' || needs.build-and-push-threads.result == 'skipped') &&
+      (needs.deploy-infrastructure.result == 'success' || needs.deploy-infrastructure.result == 'skipped')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition \
+          --task-definition threads-service-task \
+          --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: threads
+        image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REGISTRY_PREFIX }}/threads:${{ github.sha }}
+
+    - name: Deploy to ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: threads-service
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
+
+  deploy-users:
+    name: Deploy Users to ECS
+    runs-on: ubuntu-latest
+    needs: [build-and-push-users, deploy-infrastructure]
+    if: |
+      always() &&
+      (needs.build-and-push-users.result == 'success' || needs.build-and-push-users.result == 'skipped') &&
+      (needs.deploy-infrastructure.result == 'success' || needs.deploy-infrastructure.result == 'skipped')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition \
+          --task-definition users-service-task \
+          --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: users
+        image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REGISTRY_PREFIX }}/users:${{ github.sha }}
+
+    - name: Deploy to ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: users-service
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
+
+  # Job 5: Post-deployment verification
+  verify-deployment:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-posts, deploy-threads, deploy-users]
+    if: always()
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Get ALB URL
+      id: alb
+      run: |
+        cd terraform
+        ALB_URL=$(terraform output -raw alb_url 2>/dev/null || echo "")
+        if [ -z "$ALB_URL" ]; then
+          echo "⚠️ Could not retrieve ALB URL"
+          echo "alb_url=not-available" >> $GITHUB_OUTPUT
+        else
+          echo "alb_url=$ALB_URL" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Test Service Health
+      if: steps.alb.outputs.alb_url != 'not-available'
+      run: |
+        ALB_URL="${{ steps.alb.outputs.alb_url }}"
+        echo "Testing services at $ALB_URL"
+        
+        # Wait for ALB to be ready
+        sleep 30
+        
+        # Test each service
+        for service in posts threads users; do
+          echo "Testing $service service..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$ALB_URL/api/$service/health" || echo "000")
+          if [ "$response" = "200" ]; then
+            echo "✓ $service service is healthy"
+          else
+            echo "⚠️ $service service returned status: $response"
+          fi
+        done
+
+    - name: Deployment Summary
+      run: |
+        echo "### Deployment Summary 📊" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Posts: ${{ needs.deploy-posts.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Threads: ${{ needs.deploy-threads.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Users: ${{ needs.deploy-users.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
