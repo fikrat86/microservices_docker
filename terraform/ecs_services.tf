@@ -185,10 +185,6 @@ resource "aws_ecs_service" "posts" {
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 
-  deployment_controller {
-    type = "ECS"
-  }
-
   deployment_configuration {
     maximum_percent         = 200
     minimum_healthy_percent = 100
@@ -225,10 +221,6 @@ resource "aws_ecs_service" "threads" {
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
 
-  deployment_controller {
-    type = "ECS"
-  }
-
   deployment_configuration {
     maximum_percent         = 200
     minimum_healthy_percent = 100
@@ -264,10 +256,6 @@ resource "aws_ecs_service" "users" {
   task_definition = aws_ecs_task_definition.users.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
-
-  deployment_controller {
-    type = "ECS"
-  }
 
   deployment_configuration {
     maximum_percent         = 200
