@@ -231,13 +231,25 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
+    - name: Check if ECS service exists
+      id: check-service
+      run: |
+        if aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services posts-service --region ${{ env.AWS_REGION }} --query 'services[0].serviceName' --output text 2>/dev/null | grep -q 'posts-service'; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "⚠️ ECS service not found. Deploy infrastructure first with Terraform."
+        fi
+
     - name: Download task definition
+      if: steps.check-service.outputs.exists == 'true'
       run: |
         aws ecs describe-task-definition \
           --task-definition posts-service-task \
           --query taskDefinition > task-definition.json
 
     - name: Fill in the new image ID
+      if: steps.check-service.outputs.exists == 'true'
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
@@ -246,12 +258,19 @@ jobs:
         image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REGISTRY_PREFIX }}/posts:${{ github.sha }}
 
     - name: Deploy to ECS
+      if: steps.check-service.outputs.exists == 'true'
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: posts-service
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
+
+    - name: Skip deployment message
+      if: steps.check-service.outputs.exists == 'false'
+      run: |
+        echo "::warning::ECS infrastructure not deployed yet. Please run Terraform apply first."
+        echo "To deploy infrastructure: cd terraform && terraform apply"
 
   deploy-threads:
     name: Deploy Threads to ECS
@@ -277,13 +296,24 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
+    - name: Check if ECS service exists
+      id: check-service
+      run: |
+        if aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services threads-service --region ${{ env.AWS_REGION }} --query 'services[0].serviceName' --output text 2>/dev/null | grep -q 'threads-service'; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Download task definition
+      if: steps.check-service.outputs.exists == 'true'
       run: |
         aws ecs describe-task-definition \
           --task-definition threads-service-task \
           --query taskDefinition > task-definition.json
 
     - name: Fill in the new image ID
+      if: steps.check-service.outputs.exists == 'true'
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
@@ -292,12 +322,18 @@ jobs:
         image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REGISTRY_PREFIX }}/threads:${{ github.sha }}
 
     - name: Deploy to ECS
+      if: steps.check-service.outputs.exists == 'true'
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: threads-service
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
+
+    - name: Skip deployment message
+      if: steps.check-service.outputs.exists == 'false'
+      run: |
+        echo "::warning::ECS infrastructure not deployed yet. Please run Terraform apply first."
 
   deploy-users:
     name: Deploy Users to ECS
@@ -323,13 +359,24 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
+    - name: Check if ECS service exists
+      id: check-service
+      run: |
+        if aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services users-service --region ${{ env.AWS_REGION }} --query 'services[0].serviceName' --output text 2>/dev/null | grep -q 'users-service'; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Download task definition
+      if: steps.check-service.outputs.exists == 'true'
       run: |
         aws ecs describe-task-definition \
           --task-definition users-service-task \
           --query taskDefinition > task-definition.json
 
     - name: Fill in the new image ID
+      if: steps.check-service.outputs.exists == 'true'
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
@@ -338,12 +385,18 @@ jobs:
         image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REGISTRY_PREFIX }}/users:${{ github.sha }}
 
     - name: Deploy to ECS
+      if: steps.check-service.outputs.exists == 'true'
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: users-service
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
+
+    - name: Skip deployment message
+      if: steps.check-service.outputs.exists == 'false'
+      run: |
+        echo "::warning::ECS infrastructure not deployed yet. Please run Terraform apply first."
 
   # Job 5: Post-deployment verification
   verify-deployment:

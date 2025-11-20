@@ -36,6 +36,22 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
+    - name: Check if ECS service exists
+      id: check-service
+      run: |
+        if aws ecs describe-services \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --services ${{ env.ECS_SERVICE }} \
+          --query 'services[0].serviceName' \
+          --output text 2>/dev/null | grep -q '${{ env.ECS_SERVICE }}'; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "✓ ECS service found"
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "::error::ECS service not found. Deploy infrastructure first: cd terraform && terraform apply"
+          exit 1
+        fi
+
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
