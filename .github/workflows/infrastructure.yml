@@ -59,7 +59,11 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
     needs: terraform-validate
-    if: github.event_name == 'pull_request' || github.event.inputs.action == 'plan'
+    if: |
+      github.event_name == 'pull_request' || 
+      github.event.inputs.action == 'plan' ||
+      github.event.inputs.action == 'apply' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     
     steps:
       - name: Checkout code
@@ -115,9 +119,6 @@ jobs:
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       github.event.inputs.action == 'apply'
-    environment:
-      name: production
-      url: https://console.aws.amazon.com/ecs
     
     steps:
       - name: Checkout code
@@ -175,8 +176,6 @@ jobs:
     name: Terraform Destroy
     runs-on: ubuntu-latest
     if: github.event.inputs.action == 'destroy'
-    environment:
-      name: production-destroy
     
     steps:
       - name: Checkout code
