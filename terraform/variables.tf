@@ -107,3 +107,59 @@ variable "github_token_secret_arn" {
   type        = string
   default     = ""
 }
+
+# Disaster Recovery Variables
+variable "enable_dr" {
+  description = "Enable disaster recovery in secondary region"
+  type        = bool
+  default     = true
+}
+
+variable "dr_region" {
+  description = "AWS region for disaster recovery"
+  type        = string
+  default     = "us-west-2"
+}
+
+variable "dr_vpc_cidr" {
+  description = "CIDR block for DR VPC"
+  type        = string
+  default     = "10.1.0.0/16"
+}
+
+variable "dr_availability_zones" {
+  description = "List of availability zones for DR region"
+  type        = list(string)
+  default     = ["us-west-2a", "us-west-2b"]
+}
+
+variable "backup_retention_days" {
+  description = "Number of days to retain database backups"
+  type        = number
+  default     = 7
+}
+
+variable "enable_cross_region_backup" {
+  description = "Enable cross-region backup replication"
+  type        = bool
+  default     = true
+}
+
+# DynamoDB Variables
+variable "enable_global_tables" {
+  description = "Enable DynamoDB Global Tables for multi-region replication"
+  type        = bool
+  default     = true
+}
+
+variable "dynamodb_billing_mode" {
+  description = "DynamoDB billing mode (PROVISIONED or PAY_PER_REQUEST)"
+  type        = string
+  default     = "PAY_PER_REQUEST"
+}
+
+variable "dynamodb_point_in_time_recovery" {
+  description = "Enable point-in-time recovery for DynamoDB tables"
+  type        = bool
+  default     = true
+}

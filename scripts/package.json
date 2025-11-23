@@ -1,0 +1,15 @@
+{
+  "name": "microservices-scripts",
+  "version": "1.0.0",
+  "description": "Migration and management scripts for microservices",
+  "main": "migrate-to-dynamodb.js",
+  "scripts": {
+    "migrate": "node migrate-to-dynamodb.js"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1498.0"
+  },
+  "devDependencies": {},
+  "author": "",
+  "license": "MIT"
+}

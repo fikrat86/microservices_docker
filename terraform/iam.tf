@@ -96,6 +96,28 @@ resource "aws_iam_role_policy" "ecs_task_role_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = [
+          aws_dynamodb_table.users.arn,
+          "${aws_dynamodb_table.users.arn}/index/*",
+          aws_dynamodb_table.threads.arn,
+          "${aws_dynamodb_table.threads.arn}/index/*",
+          aws_dynamodb_table.posts.arn,
+          "${aws_dynamodb_table.posts.arn}/index/*"
+        ]
       }
     ]
   })

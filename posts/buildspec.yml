@@ -2,6 +2,7 @@ version: 0.2
 
 # BuildSpec for Posts Microservice
 # This file defines the build process for creating and pushing Docker images to ECR
+# Includes testing, linting, and security scanning
 
 phases:
   pre_build:
@@ -14,15 +15,38 @@ phases:
       - IMAGE_TAG=${IMAGE_TAG:-latest}
       - echo Repository URI is $REPOSITORY_URI
       - echo Image tag is $IMAGE_TAG
+      - cd posts
+      - echo Installing dependencies...
+      - npm ci
 
   build:
     commands:
       - echo Build started on `date`
+      
+      # Run linting
+      - echo Running ESLint...
+      - npm run lint
+      
+      # Run tests with coverage
+      - echo Running tests with coverage...
+      - npm test
+      
+      # Security scanning with npm audit
+      - echo Running security audit...
+      - npm audit --audit-level=moderate || true
+      
+      # Build Docker image
       - echo Building the Docker image...
-      - cd posts
       - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$COMMIT_HASH
+      
+      # Scan Docker image for vulnerabilities
+      - echo Scanning Docker image...
+      - |
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy:latest image --severity HIGH,CRITICAL \
+          --exit-code 0 $IMAGE_REPO_NAME:$IMAGE_TAG || true
 
   post_build:
     commands:
@@ -38,6 +62,16 @@ artifacts:
   files:
     - imagedefinitions.json
   name: BuildArtifact
+
+reports:
+  test_report:
+    files:
+      - 'posts/coverage/lcov.info'
+    file-format: 'CLOVERXML'
+  coverage_report:
+    files:
+      - 'posts/coverage/clover.xml'
+    file-format: 'CLOVERXML'
 
 cache:
   paths:

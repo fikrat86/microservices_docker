@@ -90,6 +90,18 @@ resource "aws_ecs_task_definition" "threads" {
         {
           name  = "NODE_ENV"
           value = "production"
+        },
+        {
+          name  = "USE_DYNAMODB"
+          value = "true"
+        },
+        {
+          name  = "AWS_REGION"
+          value = var.aws_region
+        },
+        {
+          name  = "DYNAMODB_THREADS_TABLE"
+          value = aws_dynamodb_table.threads.name
         }
       ]
 
@@ -149,6 +161,18 @@ resource "aws_ecs_task_definition" "users" {
         {
           name  = "NODE_ENV"
           value = "production"
+        },
+        {
+          name  = "USE_DYNAMODB"
+          value = "true"
+        },
+        {
+          name  = "AWS_REGION"
+          value = var.aws_region
+        },
+        {
+          name  = "DYNAMODB_USERS_TABLE"
+          value = aws_dynamodb_table.users.name
         }
       ]
 

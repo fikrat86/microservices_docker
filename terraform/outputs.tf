@@ -78,3 +78,38 @@ output "service_endpoints" {
     users   = "http://${aws_lb.main.dns_name}/api/users"
   }
 }
+
+# DR Region Outputs
+output "dr_alb_dns_name" {
+  description = "DNS name of the DR Application Load Balancer"
+  value       = aws_lb.dr.dns_name
+}
+
+output "dr_alb_url" {
+  description = "URL of the DR Application Load Balancer"
+  value       = "http://${aws_lb.dr.dns_name}"
+}
+
+output "dr_service_endpoints" {
+  description = "DR service endpoints for testing"
+  value = {
+    posts   = "http://${aws_lb.dr.dns_name}/api/posts"
+    threads = "http://${aws_lb.dr.dns_name}/api/threads"
+    users   = "http://${aws_lb.dr.dns_name}/api/users"
+  }
+}
+
+output "dr_ecs_cluster_name" {
+  description = "Name of the DR ECS cluster"
+  value       = aws_ecs_cluster.dr.name
+}
+
+output "backup_bucket_name" {
+  description = "Name of the S3 bucket for database backups"
+  value       = aws_s3_bucket.backup.id
+}
+
+output "dr_backup_bucket_name" {
+  description = "Name of the DR S3 bucket for database backups"
+  value       = aws_s3_bucket.dr_backup.id
+}
