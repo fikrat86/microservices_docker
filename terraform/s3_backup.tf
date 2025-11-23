@@ -36,8 +36,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
   rule {
     id     = "delete-old-backups"
     status = "Enabled"
-
-    filter {}
+    prefix = ""
 
     expiration {
       days = var.backup_retention_days
@@ -51,8 +50,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
   rule {
     id     = "transition-to-ia"
     status = "Enabled"
-
-    filter {}
+    prefix = ""
 
     transition {
       days          = 30
@@ -118,8 +116,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
   rule {
     id     = "delete-old-backups"
     status = "Enabled"
-
-    filter {}
+    prefix = ""
 
     expiration {
       days = var.backup_retention_days
@@ -218,8 +215,7 @@ resource "aws_s3_bucket_replication_configuration" "backup" {
   rule {
     id     = "replicate-to-dr"
     status = "Enabled"
-
-    filter {}
+    prefix = ""
 
     destination {
       bucket        = aws_s3_bucket.dr_backup.arn
