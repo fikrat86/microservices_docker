@@ -366,7 +366,7 @@ resource "aws_lb" "dr" {
 # DR Target Groups
 resource "aws_lb_target_group" "dr_posts" {
   provider    = aws.dr
-  name        = "${var.project_name}-posts-tg-${var.environment}-dr"
+  name        = "forum-ms-posts-tg-${var.environment}-dr"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.dr.id
@@ -386,14 +386,14 @@ resource "aws_lb_target_group" "dr_posts" {
   deregistration_delay = 30
 
   tags = {
-    Name    = "${var.project_name}-posts-tg-${var.environment}-dr"
+    Name    = "forum-microservices-posts-tg-${var.environment}-dr"
     Service = "posts"
   }
 }
 
 resource "aws_lb_target_group" "dr_threads" {
   provider    = aws.dr
-  name        = "${var.project_name}-threads-tg-${var.environment}-dr"
+  name        = "forum-ms-threads-tg-${var.environment}-dr"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.dr.id
@@ -413,14 +413,14 @@ resource "aws_lb_target_group" "dr_threads" {
   deregistration_delay = 30
 
   tags = {
-    Name    = "${var.project_name}-threads-tg-${var.environment}-dr"
+    Name    = "forum-microservices-threads-tg-${var.environment}-dr"
     Service = "threads"
   }
 }
 
 resource "aws_lb_target_group" "dr_users" {
   provider    = aws.dr
-  name        = "${var.project_name}-users-tg-${var.environment}-dr"
+  name        = "forum-ms-users-tg-${var.environment}-dr"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.dr.id
@@ -440,7 +440,7 @@ resource "aws_lb_target_group" "dr_users" {
   deregistration_delay = 30
 
   tags = {
-    Name    = "${var.project_name}-users-tg-${var.environment}-dr"
+    Name    = "forum-microservices-users-tg-${var.environment}-dr"
     Service = "users"
   }
 }

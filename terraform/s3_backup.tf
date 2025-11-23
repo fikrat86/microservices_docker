@@ -37,6 +37,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
     id     = "delete-old-backups"
     status = "Enabled"
 
+    filter {}
+
     expiration {
       days = var.backup_retention_days
     }
@@ -49,6 +51,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
   rule {
     id     = "transition-to-ia"
     status = "Enabled"
+
+    filter {}
 
     transition {
       days          = 30
@@ -114,6 +118,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
   rule {
     id     = "delete-old-backups"
     status = "Enabled"
+
+    filter {}
 
     expiration {
       days = var.backup_retention_days
