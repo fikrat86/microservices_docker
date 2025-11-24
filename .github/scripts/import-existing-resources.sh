@@ -6,14 +6,26 @@ set -e
 
 ENVIRONMENT="dev"
 PROJECT_NAME="forum-microservices"
-ACCOUNT_ID="${AWS_ACCOUNT_ID}"
 PRIMARY_REGION="us-east-1"
 DR_REGION="us-west-2"
 
 echo "=== Importing Existing Resources into Terraform State ==="
-echo "Account ID: ${ACCOUNT_ID}"
 
-cd terraform
+# Get AWS Account ID
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+echo "Account ID: ${ACCOUNT_ID}"
+echo "Working directory: $(pwd)"
+
+# Change to terraform directory if not already there
+if [ ! -f "main.tf" ]; then
+  if [ -d "terraform" ]; then
+    cd terraform
+    echo "Changed to terraform directory"
+  else
+    echo "Error: Cannot find terraform directory or main.tf"
+    exit 1
+  fi
+fi
 
 # Function to safely import a resource
 import_resource() {
