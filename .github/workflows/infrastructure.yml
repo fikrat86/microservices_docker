@@ -150,6 +150,16 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
+      - name: Import Existing Resources
+        run: |
+          # Get AWS Account ID from STS
+          export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "AWS Account ID: $AWS_ACCOUNT_ID"
+          
+          chmod +x .github/scripts/import-existing-resources.sh
+          .github/scripts/import-existing-resources.sh
+        continue-on-error: true
+
       - name: Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve
