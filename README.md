@@ -40,14 +40,15 @@ A popular web forum experienced performance degradation due to increased daily a
 ✅ **Microservices Architecture**: Independent services with dedicated resources  
 ✅ **Container-based**: Docker containers for portability and consistency  
 ✅ **Serverless Compute**: AWS Fargate eliminates server management  
+✅ **Serverless Database**: DynamoDB with Global Tables for multi-region replication  
 ✅ **Auto-scaling**: CPU and memory-based scaling for cost optimization  
 ✅ **Load Balanced**: Application Load Balancer with path-based routing  
-✅ **Infrastructure as Code**: Complete Terraform configuration  
-✅ **Automated CI/CD**: CodePipeline with testing, linting, and security checks  
+✅ **Infrastructure as Code**: Complete Terraform configuration with S3 backend  
+✅ **Automated CI/CD**: GitHub Actions with separated infrastructure and microservices workflows  
 ✅ **High Availability**: Multi-AZ deployment with health checks  
-✅ **Disaster Recovery**: Multi-region DR with automated failover  
-✅ **Interactive Dashboard**: Real-time microservice communication visualization  
-✅ **Comprehensive Testing**: Unit tests, linting, and security scanning  
+✅ **Disaster Recovery**: Multi-region DR (us-east-1 ↔ us-west-2) with < 1s RPO  
+✅ **Comprehensive Testing**: Unit tests (Jest), linting (ESLint), security scanning (npm audit, Trivy)  
+✅ **State Management**: S3 backend with DynamoDB locking for Terraform state  
 
 ## 🏗️ Architecture
 
@@ -177,17 +178,21 @@ This solution fulfills all project requirements:
 ### Infrastructure
 - **Cloud Provider**: AWS
 - **Compute**: ECS Fargate (serverless containers)
-- **Database**: Amazon DynamoDB (serverless NoSQL)
+- **Database**: Amazon DynamoDB (serverless NoSQL with Global Tables)
 - **Load Balancing**: Application Load Balancer (ALB)
 - **Container Registry**: Amazon ECR
 - **Networking**: VPC, Subnets, NAT Gateway, Internet Gateway
-- **Infrastructure as Code**: Terraform 1.5+
+- **Infrastructure as Code**: Terraform 1.5+ with S3 backend and DynamoDB locking
+- **Backup & DR**: S3 cross-region replication, DynamoDB Global Tables
 
 ### CI/CD
-- **Source Control**: AWS CodeCommit
-- **Build**: AWS CodeBuild
-- **Pipeline**: AWS CodePipeline
-- **Deployment**: ECS Rolling Deployment
+- **Source Control**: GitHub
+- **CI/CD Pipeline**: GitHub Actions (separated workflows)
+  - Infrastructure workflow: Terraform validation, planning, and deployment
+  - Microservices workflow: Service testing, building, and deployment
+- **Container Build**: Docker multi-stage builds
+- **Security Scanning**: npm audit, Trivy image scanning
+- **Deployment**: ECS rolling updates with automatic rollback
 
 ### Monitoring & Logging
 - **Logs**: CloudWatch Logs
@@ -215,52 +220,73 @@ This solution fulfills all project requirements:
 
 **Quick Start**:
 ```powershell
-# Deploy DynamoDB tables
-cd terraform
-terraform apply
+# Step 1: Setup Terraform S3 backend
+cd scripts
+.\setup-terraform-backend.ps1
 
-# Migrate data from JSON files
+# Step 2: Initialize Terraform with backend
+cd ..\terraform
+terraform init -reconfigure
+
+# Step 3: Deploy DynamoDB tables
+terraform apply -target=aws_dynamodb_table.users -target=aws_dynamodb_table.threads -target=aws_dynamodb_table.posts
+
+# Step 4: Migrate data from JSON files
 cd ..\scripts
 .\dynamodb-management.ps1 -Action migrate
 
-# Verify tables
+# Step 5: Verify tables and data
 .\dynamodb-management.ps1 -Action verify
+
+# Step 6: Verify DR replication
+.\dynamodb-management.ps1 -Action verify -Region us-west-2
 ```
 
-📚 **Documentation**: `docs/DYNAMODB_GUIDE.md`
+📚 **Documentation**: 
+- `docs/DYNAMODB_IMPLEMENTATION_GUIDE.md` - Complete implementation guide
+- `docs/DYNAMODB_SUMMARY.md` - Quick reference and architecture
+- `docs/DYNAMODB_QUICKREF.md` - Common operations cheat sheet
 
 ### 2. Disaster Recovery (DR)
-Complete multi-region disaster recovery solution:
-- **Secondary Region**: Full infrastructure replication in us-west-2
-- **Database DR**: DynamoDB Global Tables with automatic replication
-- **Automated Backup**: S3 cross-region replication for data
+Complete multi-region disaster recovery solution with DynamoDB Global Tables:
+
+**Database DR**:
+- **DynamoDB Global Tables**: Automatic bidirectional replication
+- **Primary Region**: us-east-1 (read/write)
+- **DR Region**: us-west-2 (read/write)
+- **Replication Lag**: < 1 second
+- **RPO**: < 1 second (database)
+- **RTO**: < 1 minute (database), < 15 minutes (full stack)
+
+**Infrastructure DR**:
+- **Secondary Region**: Complete infrastructure replication in us-west-2
+- **Automated Backup**: S3 cross-region replication for files
 - **Container Sync**: ECR image replication to DR region
 - **Failover Scripts**: Automated failover and testing scripts
-- **RTO**: < 1 minute (database), < 15 minutes (full stack)
-- **RPO**: < 1 second (database), < 1 hour (files)
 
 **Quick Start**:
 ```powershell
-# Test DR site
-.\scripts\dr-management.ps1 -Action test-dr
-
-# Test database DR
+# Verify database DR replication
 .\scripts\dynamodb-management.ps1 -Action verify -Region us-west-2
 
-# Create backup
+# Test database DR failover
+.\scripts\dynamodb-management.ps1 -Action test-dr
+
+# Create infrastructure backup
 .\scripts\dr-management.ps1 -Action backup
 
-# Failover to DR
+# Test DR site availability
+.\scripts\dr-management.ps1 -Action test-dr
+
+# Execute failover to DR region
 .\scripts\dr-management.ps1 -Action failover
 ```
 
-📚 **Documentation**: `docs/DISASTER_RECOVERY.md`
+📚 **Documentation**: 
+- `docs/DISASTER_RECOVERY.md` - Complete DR guide
+- `docs/DYNAMODB_IMPLEMENTATION_GUIDE.md` - Database DR details
 
 ### 3. Interactive Dashboard
-
-See [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) for complete guide.
-
-### 2. Interactive Dashboard
 Real-time microservice communication visualization:
 - **Live Health Monitoring**: Real-time service status tracking
 - **API Testing**: One-click endpoint testing
@@ -273,29 +299,96 @@ Real-time microservice communication visualization:
 
 See [docs/DASHBOARD_GUIDE.md](docs/DASHBOARD_GUIDE.md) for complete guide.
 
-### 3. Testing & Quality Assurance
-Comprehensive testing and code quality:
-- **Unit Tests**: Jest tests for all services (80%+ coverage)
-- **Linting**: ESLint with StandardJS style
+### 4. Testing & Quality Assurance
+Comprehensive testing and code quality integrated into CI/CD:
+- **Unit Tests**: Jest tests for all services (80%+ coverage requirement)
+- **Linting**: ESLint with StandardJS style guide
 - **Security Scanning**: 
   - npm audit for dependency vulnerabilities
   - Trivy for container image scanning
-- **CI Integration**: All checks run in build pipeline
+  - Automated in GitHub Actions workflows
+- **CI Integration**: All checks run automatically on push and PR
 
 **Quick Start**:
 ```powershell
-# Run tests
+# Run all quality checks for a service
 cd users
-npm test
+npm test              # Run Jest tests with coverage
+npm run lint          # Run ESLint
+npm run lint:fix      # Auto-fix linting issues
+npm audit             # Check for vulnerabilities
 
-# Run linting
-npm run lint
+# Run tests in watch mode during development
+npm test -- --watch
 
-# Security audit
-npm audit
+# Generate detailed coverage report
+npm test -- --coverage
 ```
 
-See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for complete guide.
+**GitHub Actions Integration**:
+- Every push and PR triggers automated testing
+- Microservices workflow runs: lint → test → audit → build → scan
+- Infrastructure workflow runs: validate → plan → security-scan
+- Failed checks block deployment automatically
+
+📚 **Documentation**: `docs/TESTING_GUIDE.md`
+
+### 5. CI/CD with GitHub Actions
+Separated workflows for infrastructure and microservices:
+
+**Infrastructure Workflow** (`.github/workflows/infrastructure.yml`):
+```yaml
+Triggers: Manual (workflow_dispatch), PR, push to main
+Jobs:
+  1. terraform-validate: Check Terraform syntax
+  2. terraform-plan: Generate execution plan
+  3. terraform-apply: Deploy infrastructure (manual approval)
+  4. terraform-destroy: Destroy infrastructure (manual only)
+  5. security-scan: Terraform security scanning
+```
+
+**Microservices Workflow** (`.github/workflows/microservices.yml`):
+```yaml
+Triggers: Push to main, PR
+Jobs:
+  1. detect-changes: Identify which services changed
+  2. test-and-build-[service]: For each changed service:
+     - ESLint code quality check
+     - Jest unit tests with coverage
+     - npm audit security scan
+     - Docker build and push to ECR
+     - Trivy container image scan
+  3. deploy-[service]: Deploy to ECS Fargate
+```
+
+**Quick Start**:
+```powershell
+# Trigger infrastructure deployment
+# Go to: GitHub → Actions → Infrastructure Deployment → Run workflow
+# Select: action = "apply"
+
+# Trigger microservices deployment
+# Option 1: Push code changes
+git add .
+git commit -m "Update microservices"
+git push origin main
+
+# Option 2: Manual trigger
+# Go to: GitHub → Actions → Microservices CI/CD → Run workflow
+```
+
+**Workflow Features**:
+- ✅ Change detection (only build/deploy modified services)
+- ✅ Parallel job execution for faster builds
+- ✅ Automatic rollback on deployment failure
+- ✅ Comprehensive security scanning
+- ✅ Manual approval for infrastructure changes
+- ✅ Secrets management via GitHub Secrets
+
+📚 **Documentation**: 
+- `.github/workflows/infrastructure.yml` - Infrastructure workflow
+- `.github/workflows/microservices.yml` - Microservices workflow
+- `GITHUB_ACTIONS_SETUP.md` - Setup guide
 
 ## 📁 Project Structure
 
@@ -339,6 +432,7 @@ microservices_docker/
 │
 ├── terraform/                      # Infrastructure as Code
 │   ├── main.tf                    # Provider configuration
+│   ├── backend.tf                 # S3 backend configuration (NEW)
 │   ├── variables.tf               # Input variables (with DR vars)
 │   ├── outputs.tf                 # Output values (with DR outputs)
 │   ├── vpc.tf                     # VPC and networking
@@ -349,20 +443,23 @@ microservices_docker/
 │   ├── ecs_services.tf            # ECS services and tasks
 │   ├── iam.tf                     # IAM roles and policies
 │   ├── autoscaling.tf             # Auto-scaling configuration
-│   ├── dr_region.tf               # DR region infrastructure
-│   ├── dr_ecs_services.tf         # DR ECS services
-│   ├── s3_backup.tf               # S3 backup and replication
-│   ├── cicd_iam.tf.disabled       # CI/CD IAM roles
-│   ├── codebuild.tf.disabled      # CodeBuild projects
-│   ├── codepipeline.tf.disabled   # CodePipeline configuration
+│   ├── dynamodb.tf                # DynamoDB tables (NEW)
+│   ├── dr_region.tf               # DR region infrastructure (NEW)
+│   ├── dr_ecs_services.tf         # DR ECS services (NEW)
+│   ├── s3_backup.tf               # S3 backup and replication (NEW)
+│   ├── terraform.tfstate          # Local state (before S3 migration)
+│   ├── terraform.tfvars           # Variables configuration
 │   └── terraform.tfvars.example   # Variables template
 │
-├── scripts/                        # Deployment and DR scripts
+├── scripts/                        # Deployment and management scripts
 │   ├── deploy.ps1                 # Main deployment script
 │   ├── build-and-push.ps1         # Build and push Docker images
 │   ├── test-services.ps1          # Test deployed services
-│   ├── dr-management.ps1          # DR operations (NEW)
-│   └── cleanup-aws-resources.ps1  # Resource cleanup
+│   ├── setup-terraform-backend.ps1 # Setup S3 backend (NEW)
+│   ├── cleanup-aws-resources.ps1  # Resource cleanup (NEW)
+│   ├── cleanup-all-resources.ps1  # Comprehensive cleanup (NEW)
+│   ├── dynamodb-management.ps1    # DynamoDB operations (NEW)
+│   └── dr-management.ps1          # DR operations (NEW)
 │
 ├── nginx/                          # Local development proxy
 │   └── nginx.conf                 # Nginx configuration
@@ -370,13 +467,25 @@ microservices_docker/
 ├── docs/                           # Documentation
 │   ├── ARCHITECTURE.md            # Architecture diagram
 │   ├── COST_ESTIMATE.md           # Cost analysis
-│   ├── DISASTER_RECOVERY.md       # DR guide (NEW)
-│   ├── TESTING_GUIDE.md           # Testing & QA guide (NEW)
-│   └── DASHBOARD_GUIDE.md         # Dashboard guide (NEW)
+│   ├── QUICKSTART.md              # Quick start guide
+│   ├── DISASTER_RECOVERY.md       # DR guide
+│   ├── TESTING_GUIDE.md           # Testing & QA guide
+│   ├── DYNAMODB_IMPLEMENTATION_GUIDE.md  # DynamoDB setup (NEW)
+│   ├── DYNAMODB_SUMMARY.md        # DynamoDB quick reference (NEW)
+│   └── DYNAMODB_QUICKREF.md       # DynamoDB operations (NEW)
 │
-├── dashboard.html                  # Interactive dashboard (NEW)
+├── .github/                        # GitHub Actions workflows (NEW)
+│   └── workflows/
+│       ├── infrastructure.yml     # Terraform deployment workflow
+│       └── microservices.yml      # Microservices CI/CD workflow
+│
 ├── docker-compose.yml              # Local development environment
 ├── .gitignore                      # Git ignore rules
+├── COMPLETION_REPORT.md            # Project completion summary
+├── DEPLOYMENT_CHECKLIST.md         # Deployment checklist
+├── DOCUMENTATION_INDEX.md          # Documentation index
+├── GITHUB_ACTIONS_SETUP.md         # GitHub Actions setup guide
+├── PROJECT_SUMMARY.md              # Project summary
 └── README.md                       # This file
 ```
 
@@ -511,7 +620,92 @@ Invoke-WebRequest -Uri "http://localhost:3003/api/users" -Method Get
 
 ## ☁️ AWS Deployment
 
-### Step 1: Prepare Terraform Variables
+### Overview
+
+The deployment process is now streamlined with GitHub Actions workflows and Terraform S3 backend for state management.
+
+### Prerequisites Checklist
+
+Before deployment, ensure you have:
+- ✅ AWS CLI configured with credentials (`aws configure`)
+- ✅ Terraform installed (v1.5.0+)
+- ✅ GitHub repository set up with Actions enabled
+- ✅ AWS credentials added to GitHub Secrets (see `GITHUB_ACTIONS_SETUP.md`)
+
+### Step 1: Setup Terraform S3 Backend
+
+The S3 backend provides centralized state management and prevents orphaned resources:
+
+```powershell
+# Navigate to scripts directory
+cd scripts
+
+# Run backend setup script
+.\setup-terraform-backend.ps1
+
+# Expected output:
+# ✓ Created S3 bucket: forum-microservices-terraform-state-dev
+# ✓ Enabled versioning
+# ✓ Enabled encryption
+# ✓ Created DynamoDB table: forum-microservices-terraform-locks
+```
+
+This creates:
+- S3 bucket for Terraform state storage
+- DynamoDB table for state locking
+- Bucket versioning and encryption
+
+### Step 2: Initialize Terraform with Backend
+
+```powershell
+# Navigate to terraform directory
+cd ..\terraform
+
+# Initialize Terraform with S3 backend
+terraform init -reconfigure
+
+# Expected output:
+# Initializing the backend...
+# Successfully configured the backend "s3"!
+# Terraform has been successfully initialized!
+```
+
+### Step 3: Deploy Infrastructure via GitHub Actions
+
+**Option A: Via GitHub Web Interface** (Recommended)
+```
+1. Go to: https://github.com/YOUR_USERNAME/microservices_docker/actions
+2. Click: "Infrastructure Deployment" workflow
+3. Click: "Run workflow" button
+4. Select branch: main
+5. Select action: "apply"
+6. Click: "Run workflow"
+```
+
+**Option B: Via Local Terraform**
+```powershell
+# Review planned changes
+terraform plan -var="environment=dev"
+
+# Apply infrastructure
+terraform apply -var="environment=dev"
+
+# Or auto-approve
+terraform apply -var="environment=dev" -auto-approve
+```
+
+**What gets deployed:**
+- VPC with public/private subnets in 2 AZs
+- Application Load Balancer
+- ECS Fargate cluster
+- ECR repositories for each service
+- DynamoDB tables with Global Tables (us-east-1 ↔ us-west-2)
+- IAM roles and policies
+- CloudWatch log groups
+- Auto-scaling policies
+- DR infrastructure in us-west-2
+
+**Deployment time:** ~15-20 minutes
 
 ```powershell
 # Copy the example variables file
@@ -534,9 +728,131 @@ min_capacity = 2
 max_capacity = 10
 ```
 
-### Step 2: Build and Push Docker Images
+### Step 4: Configure Terraform Variables
 
-Before deploying infrastructure, push initial Docker images to ECR:
+```powershell
+# Copy the example variables file (if not already done)
+Copy-Item terraform.tfvars.example terraform.tfvars
+
+# Edit terraform.tfvars with your settings
+notepad terraform.tfvars
+```
+
+Example `terraform.tfvars`:
+```hcl
+# Project Configuration
+aws_region = "us-east-1"
+environment = "dev"
+project_name = "forum-microservices"
+
+# ECS Configuration
+container_cpu = 256
+container_memory = 512
+desired_count = 2
+min_capacity = 2
+max_capacity = 10
+
+# Disaster Recovery
+enable_dr = true
+dr_region = "us-west-2"
+dr_vpc_cidr = "10.1.0.0/16"
+backup_retention_days = 7
+enable_cross_region_backup = true
+```
+
+### Step 5: Migrate Data to DynamoDB
+
+After infrastructure is deployed, migrate your data from JSON files:
+
+```powershell
+# Navigate to scripts
+cd scripts
+
+# Migrate data to DynamoDB
+.\dynamodb-management.ps1 -Action migrate
+
+# Verify data migration
+.\dynamodb-management.ps1 -Action verify
+
+# Verify DR replication
+.\dynamodb-management.ps1 -Action verify -Region us-west-2
+
+# View table statistics
+.\dynamodb-management.ps1 -Action stats
+```
+
+### Step 6: Deploy Microservices
+
+**Option A: Via GitHub Actions** (Recommended)
+```
+1. Push code changes to trigger automatic deployment:
+   git add .
+   git commit -m "Deploy microservices"
+   git push origin main
+
+2. Or manually trigger:
+   GitHub → Actions → "Microservices CI/CD" → Run workflow
+```
+
+**Option B: Manual Docker Build and Push**
+```powershell
+# Build and push all services
+.\scripts\build-and-push.ps1 -Service all -Region us-east-1
+
+# Or build individual services
+.\scripts\build-and-push.ps1 -Service posts -Region us-east-1
+.\scripts\build-and-push.ps1 -Service threads -Region us-east-1
+.\scripts\build-and-push.ps1 -Service users -Region us-east-1
+
+# Update ECS services to use new images (done automatically by GitHub Actions)
+```
+
+### Step 7: Get Service URLs and Test
+
+```powershell
+# Get the ALB DNS name
+cd terraform
+terraform output alb_dns_name
+
+# Example output: forum-microservices-alb-dev-1234567890.us-east-1.elb.amazonaws.com
+```
+
+Test the services:
+```powershell
+# Set the ALB URL
+$albUrl = "http://$(terraform output -raw alb_dns_name)"
+
+# Run automated tests
+cd ..\scripts
+.\test-services.ps1 -AlbUrl $albUrl
+
+# Manual testing
+Invoke-WebRequest -Uri "$albUrl/api/threads" -Method Get
+Invoke-WebRequest -Uri "$albUrl/api/users" -Method Get
+Invoke-WebRequest -Uri "$albUrl/api/posts/in-thread/1" -Method Get
+```
+
+### Step 8: Verify Disaster Recovery
+
+```powershell
+# Test DR database replication
+.\dynamodb-management.ps1 -Action verify -Region us-west-2
+
+# Test DR infrastructure (if deployed)
+.\dr-management.ps1 -Action test-dr
+```
+
+### Deployment Summary
+
+After successful deployment, you will have:
+- ✅ Multi-region infrastructure (us-east-1 + us-west-2)
+- ✅ DynamoDB Global Tables with active-active replication
+- ✅ ECS Fargate services running in both regions
+- ✅ Application Load Balancer routing traffic
+- ✅ Auto-scaling based on CPU/memory
+- ✅ CloudWatch logging and monitoring
+- ✅ Terraform state stored in S3 with locking
+- ✅ GitHub Actions CI/CD pipelines active
 
 ```powershell
 # From the project root
@@ -771,94 +1087,249 @@ Minimum requirements enforced in `jest.config.js`:
 
 ## 🔄 CI/CD Pipeline
 
-### Architecture
+### GitHub Actions Workflows
 
-The CI/CD pipeline uses AWS native services for automated deployments:
+The project uses two separated workflows for better control and efficiency:
 
-1. **CodeCommit**: Git repositories for source code
-2. **CodeBuild**: Builds Docker images and pushes to ECR
-3. **CodePipeline**: Orchestrates the entire pipeline
-4. **ECS**: Rolling deployment to Fargate tasks
+#### 1. Infrastructure Deployment Workflow
+**File**: `.github/workflows/infrastructure.yml`
 
-### Pipeline Stages
+**Triggers**:
+- Manual dispatch (workflow_dispatch) with action parameter
+- Pull requests to main
+- Pushes to main branch
 
+**Jobs**:
+```yaml
+terraform-validate:
+  - Terraform format check
+  - Terraform validation
+  - Security scanning with Checkov
+
+terraform-plan:
+  - Generate execution plan
+  - Display planned changes
+  - Run on: plan, apply, PR, push to main
+
+terraform-apply:
+  - Apply infrastructure changes
+  - Only runs on manual trigger with action="apply"
+  - Creates/updates all AWS resources
+
+terraform-destroy:
+  - Destroy all infrastructure
+  - Only runs on manual trigger with action="destroy"
+  - Requires manual confirmation
+
+security-scan:
+  - Terraform security scanning
+  - Runs in parallel with other jobs
 ```
-Source → Build → Deploy
-  ↓        ↓        ↓
-CodeCommit → CodeBuild → ECS Fargate
-             (Docker)    (Rolling Update)
+
+**Usage**:
+```powershell
+# Via GitHub UI:
+# 1. Go to Actions → Infrastructure Deployment
+# 2. Click "Run workflow"
+# 3. Select action: validate|plan|apply|destroy
+# 4. Click "Run workflow"
+
+# The workflow will:
+# - Validate Terraform configuration
+# - Run security scans
+# - Generate and show execution plan
+# - Apply changes (if action=apply)
 ```
+
+#### 2. Microservices CI/CD Workflow
+**File**: `.github/workflows/microservices.yml`
+
+**Triggers**:
+- Push to main branch
+- Pull requests to main
+
+**Jobs**:
+```yaml
+detect-changes:
+  - Identifies which services changed
+  - Uses git diff to detect modifications
+  - Outputs: changed_services list
+
+test-and-build-[posts|threads|users]:
+  - Runs for each changed service
+  - ESLint code quality check
+  - Jest unit tests with coverage
+  - npm audit security scan
+  - Docker multi-stage build
+  - Push image to ECR
+  - Trivy container security scan
+
+deploy-[posts|threads|users]:
+  - Deploy to ECS Fargate
+  - Update task definition
+  - Force new deployment
+  - Wait for service stability
+```
+
+**Change Detection**:
+The workflow only builds and deploys services that have changed:
+```yaml
+# Example: If you only modify posts/server.js
+# Result: Only posts service is built and deployed
+# Benefit: Faster builds, lower costs
+```
+
+**Security Checks**:
+Every build includes:
+- ✅ ESLint linting
+- ✅ Jest unit tests
+- ✅ npm audit (dependency vulnerabilities)
+- ✅ Trivy scan (container image vulnerabilities)
+- ✅ Automated rollback on failure
 
 ### Setting Up CI/CD
 
-#### 1. Push Code to CodeCommit
+#### Prerequisites
+
+1. **GitHub Repository Secrets** (Settings → Secrets and variables → Actions):
+   ```
+   AWS_ACCESS_KEY_ID: Your AWS access key
+   AWS_SECRET_ACCESS_KEY: Your AWS secret key
+   AWS_REGION: us-east-1
+   AWS_ACCOUNT_ID: Your 12-digit account ID
+   ```
+
+2. **Enable GitHub Actions**:
+   - Workflows are automatically enabled when you push `.github/workflows/` directory
+
+#### First Deployment
 
 ```powershell
-# Get CodeCommit repository URLs
-cd terraform
-$postsRepo = terraform output -raw codecommit_posts_clone_url
-$threadsRepo = terraform output -raw codecommit_threads_clone_url
-$usersRepo = terraform output -raw codecommit_users_clone_url
-
-# Set up Git credentials for AWS CodeCommit
-# Follow: https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-gc.html
-
-# Clone and push each service
-# Posts Service
-git clone $postsRepo posts-repo
-cd posts-repo
-Copy-Item -Recurse ..\posts\* .
+# 1. Ensure all code is committed
 git add .
-git commit -m "Initial commit"
+git commit -m "Initial deployment"
 git push origin main
-cd ..
 
-# Repeat for threads and users services
+# 2. Deploy infrastructure first
+# Go to: GitHub → Actions → Infrastructure Deployment → Run workflow
+# Select: action = "apply"
+
+# 3. Push microservices (triggers automatic deployment)
+# Already done in step 1, or make a small change:
+git commit --allow-empty -m "Trigger microservices deployment"
+git push origin main
+
+# 4. Monitor progress
+# Go to: GitHub → Actions → View running workflows
 ```
 
-#### 2. Pipeline Triggers
-
-The pipeline automatically triggers when code is pushed to the `main` branch. CloudWatch Events monitor CodeCommit for changes.
-
-#### 3. Monitor Pipeline Execution
+#### Subsequent Deployments
 
 ```powershell
-# View pipeline status in AWS Console
-# Navigate to: CodePipeline → Pipelines → Select your pipeline
+# Make changes to services
+code posts/server.js
 
-# Or use AWS CLI
-aws codepipeline get-pipeline-state --name forum-microservices-posts-pipeline-dev
+# Commit and push
+git add posts/server.js
+git commit -m "Update posts service endpoint"
+git push origin main
+
+# GitHub Actions will:
+# 1. Detect only posts/ directory changed
+# 2. Run tests for posts service
+# 3. Build and scan posts Docker image
+# 4. Deploy only posts service to ECS
+# 5. Skip threads and users (no changes)
 ```
 
 ### Pipeline Workflow
 
-1. **Developer pushes code** to CodeCommit `main` branch
-2. **CloudWatch Event** triggers CodePipeline
-3. **CodeBuild** pulls source code
-4. **CodeBuild** builds Docker image using `buildspec.yml`
-5. **CodeBuild** pushes image to ECR
-6. **CodePipeline** updates ECS service with new image
-7. **ECS** performs rolling deployment:
-   - Starts new tasks with new image
-   - Waits for health checks to pass
-   - Drains connections from old tasks
-   - Terminates old tasks
-8. **Auto-rollback** if health checks fail
-
-### Blue/Green Deployment Strategy
-
-The current implementation uses **ECS Rolling Deployment** which provides:
-- Zero-downtime deployments
-- Automatic health checks
-- Automatic rollback on failure
-
-Configuration in ECS service:
-```hcl
-deployment_configuration {
-  maximum_percent = 200          # Can run 2x desired count during deployment
-  minimum_healthy_percent = 100  # Always maintain full capacity
-}
 ```
+Developer Push
+      ↓
+[GitHub Actions Triggered]
+      ↓
+┌─────────────────────────────────────┐
+│  INFRASTRUCTURE WORKFLOW            │
+│  (if .tf files changed or manual)   │
+│                                     │
+│  1. Validate Terraform              │
+│  2. Security Scan (Checkov)         │
+│  3. Plan Infrastructure             │
+│  4. Apply (manual approval)         │
+└─────────────────────────────────────┘
+      ↓
+┌─────────────────────────────────────┐
+│  MICROSERVICES WORKFLOW             │
+│  (if service files changed)         │
+│                                     │
+│  For each changed service:          │
+│  1. Lint (ESLint)                   │
+│  2. Test (Jest)                     │
+│  3. Audit (npm audit)               │
+│  4. Build (Docker)                  │
+│  5. Scan (Trivy)                    │
+│  6. Push (ECR)                      │
+│  7. Deploy (ECS)                    │
+└─────────────────────────────────────┘
+      ↓
+[ECS Fargate Rolling Update]
+      ↓
+[Service Available]
+```
+
+### Monitoring Pipeline Execution
+
+```powershell
+# View workflow runs
+# GitHub → Actions tab
+
+# View logs for specific job
+# Actions → Select workflow run → Select job
+
+# View deployment status
+aws ecs describe-services `
+  --cluster forum-microservices-cluster-dev `
+  --services forum-microservices-posts-service-dev
+
+# View task status
+aws ecs list-tasks `
+  --cluster forum-microservices-cluster-dev `
+  --service-name forum-microservices-posts-service-dev
+```
+
+### Rollback Strategy
+
+**Automatic Rollback**:
+- If health checks fail after deployment, ECS automatically rolls back
+- If container fails to start, old version continues running
+- No manual intervention needed
+
+**Manual Rollback**:
+```powershell
+# Option 1: Via AWS Console
+# ECS → Clusters → Services → Update → Select previous task definition
+
+# Option 2: Via GitHub Actions
+# 1. Revert the commit that caused the issue
+git revert <commit-hash>
+git push origin main
+
+# 2. Pipeline will automatically deploy the reverted version
+```
+
+### Cost Optimization
+
+The separated workflows reduce costs by:
+- Building only changed services
+- Parallel job execution
+- Efficient caching strategies
+- Avoiding unnecessary deployments
+
+**Example**:
+- Single service change: ~3-5 minutes, $0.01
+- All services change: ~8-12 minutes, $0.03
+- Infrastructure change: ~5-8 minutes, $0.02
 
 ## 🧪 Testing
 
@@ -916,47 +1387,136 @@ Watch ECS console to see auto-scaling in action when CPU/memory thresholds are e
 
 ## 💰 Cost Optimization
 
-This solution is designed for cost optimization:
+This solution is designed for cost optimization through multiple strategies:
 
-### 1. Serverless Compute
+### 1. Serverless Database
+- **DynamoDB Pay-Per-Request**: Only pay for reads/writes you use
+- **No Idle Costs**: Unlike RDS, no charges when not in use
+- **Global Tables**: Built-in replication, no additional services needed
+- **Monthly Cost**: ~$0.19/month (small app) vs $15+/month for RDS
+
+### 2. Serverless Compute
 - **ECS Fargate**: Pay only for resources used, no idle EC2 instances
 - **No server management**: Eliminates operational overhead
+- **Right-sized tasks**: 0.25 vCPU, 512 MB RAM per service
 
-### 2. Auto-Scaling
+### 3. Auto-Scaling
 - **Dynamic scaling**: 2-10 tasks based on actual load
 - **Scale-in**: Reduces tasks when demand decreases
 - **Target tracking**: CPU at 70%, Memory at 80%
+- **Cost savings**: Only run what you need
 
-### 3. VPC Endpoints
-- **Private connectivity**: Avoid NAT Gateway charges for AWS services
-- **Included endpoints**: S3, ECR, CloudWatch Logs
+### 4. S3 Backend for State
+- **Terraform State**: Stored in S3 ($0.023/GB/month)
+- **State Locking**: DynamoDB on-demand pricing
+- **Versioning**: Automatic state backup included
+- **Cost**: < $1/month for state management
 
-### 4. Resource Right-Sizing
-- **Small tasks**: 0.25 vCPU, 512 MB RAM (adequate for these services)
-- **Adjustable**: Can be tuned based on actual usage
+### 5. Efficient CI/CD
+- **GitHub Actions**: 2,000 free minutes/month
+- **Change Detection**: Only build/deploy modified services
+- **Parallel Jobs**: Faster builds, less time charged
+- **Caching**: Reduced build times and costs
 
-### 5. ECR Lifecycle Policies
+### 6. ECR Lifecycle Policies
 - **Automatic cleanup**: Keeps only last 10 images
 - **Reduces storage costs**: Prevents accumulation of old images
+- **Per-service policies**: Efficient image management
 
-### Estimated Monthly Cost (Dev Environment)
+### Estimated Monthly Cost
 
-See `docs/COST_ESTIMATE.md` for detailed breakdown. Approximate costs:
+#### Development Environment
 
-| Resource | Cost Range |
-|----------|-----------|
-| ECS Fargate (6 tasks @ 0.25 vCPU, 512MB) | $15-25/month |
-| Application Load Balancer | $16-20/month |
-| NAT Gateway (2 AZs) | $65-90/month |
-| ECR Storage | $1-3/month |
-| CloudWatch Logs | $3-5/month |
-| Data Transfer | $5-10/month |
-| **Total** | **$105-153/month** |
+| Resource | Quantity | Unit Cost | Monthly Cost |
+|----------|----------|-----------|--------------|
+| **Database** |
+| DynamoDB Tables | 3 tables | Pay-per-request | $0.19 |
+| DynamoDB Global Tables | 3 replicas | Replication cost | $0.15 |
+| DynamoDB Backups | Daily | $0.10/GB | $0.50 |
+| **Compute** |
+| ECS Fargate (Primary) | 6 tasks @ 0.25 vCPU, 512MB | $0.04048/hour | $17.40 |
+| ECS Fargate (DR) | 6 tasks @ 0.25 vCPU, 512MB | $0.04456/hour | $19.14 |
+| **Networking** |
+| Application Load Balancer (Primary) | 1 ALB | $0.0225/hour | $16.20 |
+| Application Load Balancer (DR) | 1 ALB | $0.0252/hour | $18.14 |
+| NAT Gateway (Primary) | 2 AZs | $0.045/hour each | $64.80 |
+| NAT Gateway (DR) | 2 AZs | $0.045/hour each | $64.80 |
+| Data Transfer | ~10GB | $0.09/GB | $0.90 |
+| **Storage** |
+| ECR Storage | ~2GB | $0.10/GB | $0.20 |
+| S3 (Terraform State) | < 1GB | $0.023/GB | $0.02 |
+| S3 (Backups) | ~5GB | $0.023/GB | $0.12 |
+| CloudWatch Logs | ~5GB | $0.50/GB | $2.50 |
+| **CI/CD** |
+| GitHub Actions | Free tier | 2,000 min/month | $0.00 |
+| **TOTAL (Dev)** | | | **~$205/month** |
 
-**Production optimizations** can include:
-- Single NAT Gateway (save ~$35/month)
-- Reserved capacity pricing
-- Savings Plans for consistent workloads
+#### Production Optimizations
+
+For production, you can reduce costs by:
+
+| Optimization | Savings | Notes |
+|--------------|---------|-------|
+| Single NAT Gateway (Primary) | -$32/month | Use 1 NAT instead of 2 (less HA) |
+| Single NAT Gateway (DR) | -$32/month | Use 1 NAT instead of 2 (less HA) |
+| Reduce DR tasks to 2 | -$13/month | Scale up only during failover |
+| Use VPC Endpoints | -$15/month | Avoid NAT for AWS service traffic |
+| Reserved Capacity | -10-20% | 1-year commitment for Fargate |
+| Lifecycle Policies | -$1/month | Aggressive ECR cleanup |
+| **TOTAL SAVINGS** | **~$93/month** | |
+| **OPTIMIZED COST** | **~$112/month** | With optimizations applied |
+
+#### Cost Breakdown by Component
+
+```
+Database (DynamoDB):        $0.84/month  (0.4%)
+Compute (ECS Fargate):     $36.54/month (18%)
+Networking (ALB + NAT):   $164.04/month (80%)
+Storage (ECR + S3 + Logs):  $2.82/month  (1.4%)
+CI/CD (GitHub Actions):     $0.00/month  (0%)
+────────────────────────────────────────
+Total:                    ~$205/month
+```
+
+**Key Insight**: Networking (NAT Gateways + ALBs) represents 80% of costs. Primary optimization target for production.
+
+### Cost Monitoring
+
+```powershell
+# Enable AWS Cost Explorer
+# AWS Console → Billing → Cost Explorer
+
+# Set up billing alerts
+aws cloudwatch put-metric-alarm `
+  --alarm-name forum-microservices-billing-alert `
+  --alarm-description "Alert when costs exceed $250/month" `
+  --metric-name EstimatedCharges `
+  --namespace AWS/Billing `
+  --statistic Maximum `
+  --period 86400 `
+  --evaluation-periods 1 `
+  --threshold 250 `
+  --comparison-operator GreaterThanThreshold
+
+# View current month costs
+aws ce get-cost-and-usage `
+  --time-period Start=2024-11-01,End=2024-11-30 `
+  --granularity MONTHLY `
+  --metrics BlendedCost
+```
+
+### Free Tier Benefits
+
+If your AWS account is within the first 12 months:
+- **ECS Fargate**: No free tier (pay-as-you-go)
+- **DynamoDB**: 25 GB storage + 25 WCU + 25 RCU free (ongoing)
+- **S3**: 5 GB storage + 20,000 GET + 2,000 PUT free (ongoing)
+- **CloudWatch**: 5 GB logs + 10 custom metrics free (ongoing)
+- **ECR**: 500 MB storage free for 12 months
+
+**Potential Free Tier Savings**: ~$3-5/month
+
+See `docs/COST_ESTIMATE.md` for detailed breakdown and regional variations.
 
 ## 📊 Monitoring and Logging
 
@@ -1003,9 +1563,25 @@ Health checks configured on:
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Troubleshooting
 
-#### 1. ECS Tasks Not Starting
+#### 1. Terraform State Lock Issues
+
+**Symptom**: "Error acquiring the state lock"
+
+**Solutions**:
+```powershell
+# Check for stuck locks in DynamoDB
+aws dynamodb scan --table-name forum-microservices-terraform-locks
+
+# Force unlock (use with caution)
+terraform force-unlock <LOCK_ID>
+
+# If lock table doesn't exist, recreate it
+.\scripts\setup-terraform-backend.ps1
+```
+
+#### 2. ECS Tasks Not Starting
 
 **Symptom**: Tasks show as "PENDING" or "STOPPED"
 
@@ -1021,7 +1597,95 @@ aws ecr list-images --repository-name forum-microservices/posts
 aws iam get-role --role-name forum-microservices-ecs-task-execution-role-dev
 ```
 
-#### 2. ALB Returns 503 Errors
+#### 2. ECS Tasks Not Starting
+
+**Symptom**: Tasks show as "PENDING" or "STOPPED"
+
+**Solutions**:
+```powershell
+# Check task logs
+aws ecs describe-tasks --cluster forum-microservices-cluster-dev --tasks <task-id>
+
+# Common issues:
+# - Image not found in ECR → Build and push images
+# - IAM role missing permissions → Check task execution role
+# - Insufficient CPU/memory → Increase task resources
+
+# Verify ECR images exist
+aws ecr list-images --repository-name forum-microservices/posts-dev
+
+# Check IAM roles
+aws iam get-role --role-name forum-microservices-ecs-task-execution-role-dev
+
+# View ECS service events
+aws ecs describe-services `
+  --cluster forum-microservices-cluster-dev `
+  --services forum-microservices-posts-service-dev `
+  --query 'services[0].events[0:10]'
+```
+
+#### 3. GitHub Actions Workflow Failures
+
+**Symptom**: Workflow fails during deployment
+
+**Solutions**:
+```powershell
+# Check GitHub Secrets are configured:
+# - AWS_ACCESS_KEY_ID
+# - AWS_SECRET_ACCESS_KEY
+# - AWS_REGION
+# - AWS_ACCOUNT_ID
+
+# Verify AWS credentials work
+aws sts get-caller-identity
+
+# Check ECR login
+aws ecr get-login-password --region us-east-1
+
+# Review workflow logs in GitHub Actions tab
+```
+
+#### 4. DynamoDB Replication Issues
+
+**Symptom**: Data not replicating to DR region
+
+**Solutions**:
+```powershell
+# Check Global Table status
+aws dynamodb describe-table --table-name forum-microservices-users-dev `
+  --query 'Table.Replicas'
+
+# Verify replication lag
+.\scripts\dynamodb-management.ps1 -Action verify -Region us-west-2
+
+# If replication is stuck, check:
+# 1. IAM permissions for DynamoDB replication
+# 2. Table is configured as Global Table
+# 3. Both regions are healthy
+```
+
+#### 5. Terraform Backend Initialization Fails
+
+**Symptom**: "Error configuring the backend" or "Backend not initialized"
+
+**Solutions**:
+```powershell
+# Verify S3 bucket exists
+aws s3 ls s3://forum-microservices-terraform-state-dev
+
+# Verify DynamoDB table exists
+aws dynamodb describe-table --table-name forum-microservices-terraform-locks
+
+# Recreate backend if missing
+cd scripts
+.\setup-terraform-backend.ps1
+
+# Reinitialize Terraform
+cd ..\terraform
+terraform init -reconfigure
+```
+
+#### 6. ALB Returns 503 Errors
 
 **Symptom**: Service Unavailable errors
 
@@ -1031,7 +1695,32 @@ aws iam get-role --role-name forum-microservices-ecs-task-execution-role-dev
 - Check ECS service has running tasks
 - Review task logs for application errors
 
-#### 3. Docker Images Not Pushing to ECR
+#### 6. ALB Returns 503 Errors
+
+**Symptom**: Service Unavailable errors
+
+**Solutions**:
+```powershell
+# Check target group health
+aws elbv2 describe-target-health `
+  --target-group-arn <target-group-arn>
+
+# Common issues:
+# - No healthy targets → Check ECS tasks are running
+# - Security group blocking → Verify ALB can reach tasks
+# - Health check failing → Check /health endpoint
+
+# Verify security group allows traffic from ALB to ECS
+# Check ECS service has running tasks
+aws ecs list-tasks `
+  --cluster forum-microservices-cluster-dev `
+  --service-name forum-microservices-posts-service-dev
+
+# Review task logs for application errors
+aws logs tail /ecs/forum-microservices-dev --follow
+```
+
+#### 7. Docker Images Not Pushing to ECR
 
 **Symptom**: Build script fails during push
 
@@ -1039,13 +1728,21 @@ aws iam get-role --role-name forum-microservices-ecs-task-execution-role-dev
 ```powershell
 # Re-authenticate with ECR
 $accountId = (aws sts get-caller-identity --query Account --output text)
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "$accountId.dkr.ecr.us-east-1.amazonaws.com"
+aws ecr get-login-password --region us-east-1 | `
+  docker login --username AWS --password-stdin `
+  "$accountId.dkr.ecr.us-east-1.amazonaws.com"
 
 # Verify repository exists
-aws ecr describe-repositories --repository-names forum-microservices/posts
+aws ecr describe-repositories --repository-names forum-microservices/posts-dev
+
+# Create repository if missing
+aws ecr create-repository --repository-name forum-microservices/posts-dev
+
+# Check Docker daemon is running
+docker ps
 ```
 
-#### 4. Terraform Apply Fails
+#### 8. Terraform Apply Fails
 
 **Symptom**: Resource creation errors
 
@@ -1065,16 +1762,103 @@ terraform destroy -auto-approve
 terraform apply
 ```
 
-#### 5. Cannot Access Services via ALB
+#### 8. Terraform Apply Fails
+
+**Symptom**: Resource creation errors
+
+**Solutions**:
+```powershell
+# Check AWS credentials
+aws sts get-caller-identity
+
+# Verify region is set correctly
+aws configure get region
+
+# Common errors:
+# - "ResourceAlreadyExists" → Resource exists from previous run
+#   Solution: Import existing resource or destroy and recreate
+# - "LimitExceeded" → AWS service quota reached
+#   Solution: Request limit increase or cleanup unused resources
+# - "InvalidParameterValue" → Configuration error
+#   Solution: Check terraform.tfvars values
+
+# Check for resource limits (VPCs, Elastic IPs, etc.)
+aws service-quotas list-service-quotas --service-code vpc
+
+# View detailed error
+terraform apply -var="environment=dev" -auto-approve 2>&1 | Tee-Object -FilePath terraform-error.log
+
+# Clean up and retry (caution: destroys resources)
+terraform destroy -auto-approve
+terraform apply -auto-approve
+```
+
+#### 9. Cannot Access Services via ALB
 
 **Symptom**: Timeout or connection refused
 
 **Solutions**:
-- Wait 5-10 minutes for DNS propagation
-- Verify ALB is "active": AWS Console → EC2 → Load Balancers
-- Check listener rules: Should route to correct target groups
-- Verify target health: All should be "healthy"
-- Check security groups allow HTTP (port 80) from internet
+```powershell
+# Wait 5-10 minutes for DNS propagation
+Start-Sleep -Seconds 300
+
+# Verify ALB is "active"
+aws elbv2 describe-load-balancers `
+  --query 'LoadBalancers[?contains(LoadBalancerName, `forum-microservices`)].State'
+
+# Check listener rules route to correct target groups
+aws elbv2 describe-listeners `
+  --load-balancer-arn <alb-arn>
+
+# Verify target health (all should be "healthy")
+aws elbv2 describe-target-health --target-group-arn <tg-arn>
+
+# Check security groups allow HTTP (port 80) from internet
+aws ec2 describe-security-groups `
+  --filters "Name=tag:Project,Values=forum-microservices"
+
+# Test from different network (some corporate firewalls block AWS)
+# Try: Mobile hotspot, VPN, or different WiFi
+```
+
+#### 10. High Costs After Deployment
+
+**Symptom**: AWS bill higher than expected
+
+**Solutions**:
+```powershell
+# Check current costs
+aws ce get-cost-and-usage `
+  --time-period Start=2024-11-01,End=2024-11-30 `
+  --granularity MONTHLY `
+  --metrics BlendedCost
+
+# Identify top cost drivers
+# Usually: NAT Gateways (80% of cost)
+
+# Cost reduction strategies:
+# 1. Use single NAT Gateway instead of 2
+# 2. Reduce desired_count in terraform.tfvars
+# 3. Scale down DR environment when not testing
+# 4. Enable VPC endpoints for AWS services
+
+# Stop non-essential resources
+aws ecs update-service `
+  --cluster forum-microservices-cluster-dev `
+  --service forum-microservices-posts-service-dev `
+  --desired-count 0
+
+# Set up billing alerts
+aws cloudwatch put-metric-alarm `
+  --alarm-name billing-alert `
+  --metric-name EstimatedCharges `
+  --namespace AWS/Billing `
+  --statistic Maximum `
+  --period 86400 `
+  --evaluation-periods 1 `
+  --threshold 250 `
+  --comparison-operator GreaterThanThreshold
+```
 
 ### Debug Commands
 
@@ -1106,29 +1890,162 @@ aws logs tail /ecs/forum-microservices-dev --follow --filter-pattern "ERROR"
 
 To destroy all resources and avoid charges:
 
-```powershell
-# Using deployment script
-.\scripts\deploy.ps1 -Action destroy -Environment dev
+### Option 1: Using GitHub Actions (Recommended)
 
-# Or manually with Terraform
+```
+1. Go to: GitHub → Actions → Infrastructure Deployment
+2. Click: "Run workflow"
+3. Select action: "destroy"
+4. Click: "Run workflow"
+5. Monitor the workflow execution
+6. Verify all resources are deleted
+```
+
+### Option 2: Using Terraform Directly
+
+```powershell
+# Navigate to terraform directory
 cd terraform
+
+# Destroy all infrastructure
 terraform destroy -var="environment=dev"
 
 # Confirm by typing 'yes' when prompted
 ```
 
-**Warning**: This will permanently delete:
-- All ECS tasks, services, and cluster
-- Application Load Balancer and target groups
-- ECR repositories and Docker images
-- VPC, subnets, NAT gateways, etc.
-- CodePipeline, CodeBuild, CodeCommit repositories
-- CloudWatch logs and alarms
-- S3 bucket with pipeline artifacts
+### Option 3: Using Cleanup Scripts
 
-**Manual cleanup** (if needed):
-- Empty and delete S3 artifact bucket manually if Terraform fails
-- Delete CloudWatch log groups if retained
+For comprehensive cleanup including orphaned resources:
+
+```powershell
+# Navigate to scripts directory
+cd scripts
+
+# Cleanup all resources in both regions
+.\cleanup-all-resources.ps1
+
+# This will delete:
+# - ECR repositories (all regions)
+# - ECS clusters and services (all regions)
+# - VPCs and networking (all regions)
+# - Load balancers and target groups
+# - DynamoDB tables
+# - S3 buckets (with confirmation)
+```
+
+### What Gets Deleted
+
+**⚠️ Warning**: This will permanently delete:
+
+**Compute & Containers**:
+- ✓ All ECS tasks, services, and clusters
+- ✓ ECR repositories and Docker images
+- ✓ Application Load Balancers and target groups
+
+**Database**:
+- ✓ DynamoDB tables (including Global Tables)
+- ✓ DynamoDB backups (if not protected)
+
+**Networking**:
+- ✓ VPC, subnets, route tables
+- ✓ NAT gateways, Internet gateways
+- ✓ Security groups, network ACLs
+- ✓ Elastic IPs
+
+**Storage & Logs**:
+- ✓ S3 buckets (Terraform state, backups)
+- ✓ CloudWatch log groups and alarms
+- ✓ CloudWatch metrics
+
+**IAM**:
+- ✓ IAM roles and policies
+- ✓ Instance profiles
+
+### Manual Cleanup (If Needed)
+
+If Terraform fails to delete some resources:
+
+```powershell
+# 1. Empty and delete S3 buckets manually
+aws s3 rm s3://forum-microservices-terraform-state-dev --recursive
+aws s3 rb s3://forum-microservices-terraform-state-dev
+
+aws s3 rm s3://forum-microservices-backups-dev-us-east-1 --recursive
+aws s3 rb s3://forum-microservices-backups-dev-us-east-1
+
+# 2. Delete DynamoDB tables (if not deleted)
+aws dynamodb delete-table --table-name forum-microservices-users-dev
+aws dynamodb delete-table --table-name forum-microservices-threads-dev
+aws dynamodb delete-table --table-name forum-microservices-posts-dev
+aws dynamodb delete-table --table-name forum-microservices-terraform-locks
+
+# 3. Delete ECR repositories
+aws ecr delete-repository --repository-name forum-microservices/posts-dev --force
+aws ecr delete-repository --repository-name forum-microservices/threads-dev --force
+aws ecr delete-repository --repository-name forum-microservices/users-dev --force
+
+# 4. Delete CloudWatch log groups
+aws logs delete-log-group --log-group-name /ecs/forum-microservices-dev
+aws logs delete-log-group --log-group-name /aws/ecs/forum-microservices-dev
+
+# 5. Check for orphaned resources
+.\cleanup-orphaned-resources.ps1
+```
+
+### Verify Cleanup
+
+```powershell
+# Check for remaining resources
+aws ecs list-clusters
+aws ecr describe-repositories
+aws dynamodb list-tables
+aws ec2 describe-vpcs --filters "Name=tag:Project,Values=forum-microservices"
+aws elbv2 describe-load-balancers
+
+# Check estimated costs (should be $0 after cleanup)
+aws ce get-cost-and-usage `
+  --time-period Start=2024-11-01,End=2024-11-30 `
+  --granularity MONTHLY `
+  --metrics BlendedCost `
+  --filter file://cost-filter.json
+```
+
+### Cleanup Checklist
+
+After running cleanup, verify:
+- [ ] No ECS clusters running
+- [ ] No ECR repositories exist
+- [ ] No DynamoDB tables exist
+- [ ] No custom VPCs exist (only default VPC remains)
+- [ ] No Load Balancers exist
+- [ ] No NAT Gateways exist
+- [ ] S3 buckets are empty or deleted
+- [ ] CloudWatch log groups are deleted
+- [ ] AWS Cost Explorer shows $0 estimated charges
+
+### Keep State Management (Optional)
+
+If you want to keep the S3 backend for future deployments:
+
+```powershell
+# Destroy only application resources, keep state backend
+terraform destroy -target=module.ecs -target=module.vpc -target=module.alb
+
+# Keep these:
+# - S3 bucket: forum-microservices-terraform-state-dev
+# - DynamoDB table: forum-microservices-terraform-locks
+```
+
+### Cost After Cleanup
+
+After complete cleanup:
+- **Expected cost**: $0.00/month
+- **Possible small charges**: 
+  - S3 requests for state bucket (~$0.01/month if kept)
+  - CloudWatch metrics retention (~$0.01/month)
+  - Data transfer for final cleanup (~$0.05 one-time)
+
+**Total**: < $0.10/month if state backend is retained, $0.00/month if fully deleted.
 
 ## 👥 Team Members
 
@@ -1150,6 +2067,15 @@ terraform destroy -var="environment=dev"
 
 ---
 
-**Project Repository**: [Add your repository URL]  
-**Last Updated**: November 2025  
-**Version**: 1.0.0
+**Project Repository**: https://github.com/fikrat86/microservices_docker  
+**Last Updated**: November 2024  
+**Version**: 2.0.0
+
+**Key Updates in v2.0.0**:
+- ✅ DynamoDB implementation with Global Tables
+- ✅ Multi-region Disaster Recovery (us-east-1 ↔ us-west-2)
+- ✅ GitHub Actions CI/CD (separated workflows)
+- ✅ Terraform S3 backend with state locking
+- ✅ Comprehensive testing (Jest, ESLint, Trivy)
+- ✅ Automated cleanup scripts
+- ✅ Complete documentation overhaul
