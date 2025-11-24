@@ -81,6 +81,11 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      - name: Setup S3 Backend
+        run: |
+          chmod +x .github/scripts/setup-backend.sh
+          .github/scripts/setup-backend.sh
+
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
@@ -135,6 +140,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Setup S3 Backend
+        run: |
+          chmod +x .github/scripts/setup-backend.sh
+          .github/scripts/setup-backend.sh
 
       - name: Terraform Init
         working-directory: ./terraform
@@ -192,6 +202,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Setup S3 Backend
+        run: |
+          chmod +x .github/scripts/setup-backend.sh
+          .github/scripts/setup-backend.sh
 
       - name: Terraform Init
         working-directory: ./terraform
