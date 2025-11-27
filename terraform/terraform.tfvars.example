@@ -6,6 +6,11 @@ aws_region = "us-east-1"
 environment = "dev"
 project_name = "forum-microservices"
 
+# IMPORTANT: Set to false if experiencing DynamoDB Global Tables timeout issues
+# Global Tables replicas can take 20-30+ minutes and may timeout
+# Set to true only if you need multi-region disaster recovery
+enable_global_tables = false
+
 # VPC Configuration
 vpc_cidr = "10.0.0.0/16"
 availability_zones = ["us-east-1a", "us-east-1b"]
