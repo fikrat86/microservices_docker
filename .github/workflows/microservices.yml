@@ -70,7 +70,7 @@ jobs:
     name: Test Users Service
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.users == 'true'
+    if: needs.detect-changes.outputs.users == 'true' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -113,7 +113,7 @@ jobs:
     name: Test Posts Service
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.posts == 'true'
+    if: needs.detect-changes.outputs.posts == 'true' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -156,7 +156,7 @@ jobs:
     name: Test Threads Service
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.threads == 'true'
+    if: needs.detect-changes.outputs.threads == 'true' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -200,7 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-users]
     if: |
-      needs.detect-changes.outputs.users == 'true' &&
+      (needs.detect-changes.outputs.users == 'true' || github.event_name == 'workflow_dispatch') &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     
     steps:
@@ -243,7 +243,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-posts]
     if: |
-      needs.detect-changes.outputs.posts == 'true' &&
+      (needs.detect-changes.outputs.posts == 'true' || github.event_name == 'workflow_dispatch') &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     
     steps:
@@ -286,7 +286,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-threads]
     if: |
-      needs.detect-changes.outputs.threads == 'true' &&
+      (needs.detect-changes.outputs.threads == 'true' || github.event_name == 'workflow_dispatch') &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     
     steps:
@@ -327,9 +327,9 @@ jobs:
   build-gateway:
     name: Build Gateway Service
     runs-on: ubuntu-latest
-    needs: [detect-changes]
+    needs: detect-changes
     if: |
-      needs.detect-changes.outputs.gateway == 'true' &&
+      (needs.detect-changes.outputs.gateway == 'true' || github.event_name == 'workflow_dispatch') &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     
     steps:
@@ -404,22 +404,22 @@ jobs:
         run: |
           CLUSTER_NAME="forum-microservices-cluster-dev"
           
-          if [ "${{ needs.detect-changes.outputs.users }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.users }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Updating users service..."
-            aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-users-dev --force-new-deployment
+            aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-users-service-dev --force-new-deployment
           fi
           
-          if [ "${{ needs.detect-changes.outputs.posts }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.posts }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Updating posts service..."
-            aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-posts-dev --force-new-deployment
+            aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-posts-service-dev --force-new-deployment
           fi
           
-          if [ "${{ needs.detect-changes.outputs.threads }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.threads }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Updating threads service..."
-            aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-threads-dev --force-new-deployment
+            aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-threads-service-dev --force-new-deployment
           fi
           
-          if [ "${{ needs.detect-changes.outputs.gateway }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.gateway }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Updating gateway service..."
             aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-gateway-service-dev --force-new-deployment
           fi
@@ -428,22 +428,22 @@ jobs:
         run: |
           CLUSTER_NAME="forum-microservices-cluster-dev"
           
-          if [ "${{ needs.detect-changes.outputs.users }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.users }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Waiting for users service..."
-            aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-users-dev
+            aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-users-service-dev
           fi
           
-          if [ "${{ needs.detect-changes.outputs.posts }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.posts }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Waiting for posts service..."
-            aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-posts-dev
+            aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-posts-service-dev
           fi
           
-          if [ "${{ needs.detect-changes.outputs.threads }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.threads }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Waiting for threads service..."
-            aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-threads-dev
+            aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-threads-service-dev
           fi
           
-          if [ "${{ needs.detect-changes.outputs.gateway }}" == "true" ]; then
+          if [ "${{ needs.detect-changes.outputs.gateway }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "Waiting for gateway service..."
             aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-gateway-service-dev
           fi
