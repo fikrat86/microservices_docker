@@ -98,7 +98,7 @@ jobs:
       - name: Terraform Plan
         working-directory: ./terraform
         run: |
-          terraform plan -out=tfplan -no-color
+          terraform plan -var="enable_global_tables=false" -out=tfplan -no-color
         continue-on-error: false
 
       - name: Upload Plan
@@ -164,7 +164,7 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ./terraform
-        run: terraform apply -auto-approve
+        run: terraform apply -var="enable_global_tables=false" -auto-approve
         
       - name: Save Terraform Outputs
         working-directory: ./terraform
