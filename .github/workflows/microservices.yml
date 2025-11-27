@@ -212,15 +212,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/forum-microservices-users:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/forum-microservices-users:$IMAGE_TAG $ECR_REGISTRY/forum-microservices-users:latest
-          docker push $ECR_REGISTRY/forum-microservices-users:$IMAGE_TAG
-          docker push $ECR_REGISTRY/forum-microservices-users:latest
+          docker build -t $ECR_REGISTRY/forum-microservices/users:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/forum-microservices/users:$IMAGE_TAG $ECR_REGISTRY/forum-microservices/users:latest
+          docker push $ECR_REGISTRY/forum-microservices/users:$IMAGE_TAG
+          docker push $ECR_REGISTRY/forum-microservices/users:latest
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ steps.login-ecr.outputs.registry }}/forum-microservices-users:${{ github.sha }}
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/forum-microservices/users:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -255,15 +255,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/forum-microservices-posts:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/forum-microservices-posts:$IMAGE_TAG $ECR_REGISTRY/forum-microservices-posts:latest
-          docker push $ECR_REGISTRY/forum-microservices-posts:$IMAGE_TAG
-          docker push $ECR_REGISTRY/forum-microservices-posts:latest
+          docker build -t $ECR_REGISTRY/forum-microservices/posts:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/forum-microservices/posts:$IMAGE_TAG $ECR_REGISTRY/forum-microservices/posts:latest
+          docker push $ECR_REGISTRY/forum-microservices/posts:$IMAGE_TAG
+          docker push $ECR_REGISTRY/forum-microservices/posts:latest
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ steps.login-ecr.outputs.registry }}/forum-microservices-posts:${{ github.sha }}
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/forum-microservices/posts:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -298,15 +298,15 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/forum-microservices-threads:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/forum-microservices-threads:$IMAGE_TAG $ECR_REGISTRY/forum-microservices-threads:latest
-          docker push $ECR_REGISTRY/forum-microservices-threads:$IMAGE_TAG
-          docker push $ECR_REGISTRY/forum-microservices-threads:latest
+          docker build -t $ECR_REGISTRY/forum-microservices/threads:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/forum-microservices/threads:$IMAGE_TAG $ECR_REGISTRY/forum-microservices/threads:latest
+          docker push $ECR_REGISTRY/forum-microservices/threads:$IMAGE_TAG
+          docker push $ECR_REGISTRY/forum-microservices/threads:latest
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ steps.login-ecr.outputs.registry }}/forum-microservices-threads:${{ github.sha }}
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/forum-microservices/threads:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
