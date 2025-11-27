@@ -2,6 +2,8 @@ require('dotenv').config();
 const Koa = require('koa');
 const Router = require('@koa/router');
 const cors = require('@koa/cors');
+const bodyParser = require('koa-bodyparser');
+const { v4: uuidv4 } = require('uuid');
 const db = require('./db.json');
 
 const app = new Koa();
@@ -12,6 +14,9 @@ const SERVICE_NAME = 'threads-service';
 
 // CORS middleware
 app.use(cors());
+
+// Body parser middleware
+app.use(bodyParser());
 
 // Request logging middleware
 app.use(async (ctx, next) => {
@@ -45,28 +50,32 @@ router.get('/health', async (ctx) => {
 });
 
 // API endpoints
-router.get('/api/threads', async (ctx) => {
+router.get('/', async (ctx) => {
   ctx.body = db.threads;
 });
 
-router.get('/api/threads/:threadId', async (ctx) => {
-  const id = parseInt(ctx.params.threadId);
-  ctx.body = db.threads.find((thread) => thread.id == id);
+router.post('/', async (ctx) => {
+  const { userId, title, category } = ctx.request.body;
+  const newThread = {
+    threadId: uuidv4(),
+    userId,
+    title,
+    category: category || 'general',
+    createdAt: new Date().toISOString()
+  };
+  db.threads.push(newThread);
+  ctx.status = 201;
+  ctx.body = newThread;
 });
 
-router.get('/api/', async (ctx) => {
-  ctx.body = {
-    message: "Threads API ready to receive requests",
-    service: SERVICE_NAME,
-    version: '1.0.0'
-  };
-});
-
-router.get('/', async (ctx) => {
-  ctx.body = {
-    message: "Threads service is running",
-    service: SERVICE_NAME
-  };
+router.get('/:threadId', async (ctx) => {
+  const thread = db.threads.find((t) => t.threadId === ctx.params.threadId);
+  if (!thread) {
+    ctx.status = 404;
+    ctx.body = { error: 'Thread not found' };
+    return;
+  }
+  ctx.body = thread;
 });
 
 app.use(router.routes());

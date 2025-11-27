@@ -1,0 +1,337 @@
+<mxfile host="app.diagrams.net" modified="2024-11-24T00:00:00.000Z" agent="draw.io" etag="cicd-pipeline" version="22.1.0" type="device">
+  <diagram name="CI/CD Pipeline" id="cicd-pipeline-diagram">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="Forum Microservices - CI/CD Pipeline (GitHub Actions)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Developer -->
+        <mxCell id="developer" value="Developer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="150" width="40" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- GitHub Repository -->
+        <mxCell id="github-repo" value="GitHub Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontStyle=1;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="200" y="100" width="200" height="180" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="github-icon" value="" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://cdn4.iconfinder.com/data/icons/iconsimple-logotypes/512/github-128.png" vertex="1" parent="1">
+          <mxGeometry x="270" y="115" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="code-push" value="git push" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="220" y="190" width="160" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="pr-trigger" value="Pull Request" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="220" y="230" width="160" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Workflow Split -->
+        <mxCell id="workflow-split" value="GitHub Actions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;fontStyle=1;align=center;verticalAlign=top;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="480" y="80" width="1040" height="860" as="geometry" />
+        </mxCell>
+        
+        <!-- Infrastructure Workflow -->
+        <mxCell id="infra-workflow" value="Infrastructure Workflow" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;align=left;verticalAlign=top;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="500" y="120" width="480" height="800" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-trigger" value="Triggers:&#xa;• terraform/** files changed&#xa;• Manual (workflow_dispatch)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left" vertex="1" parent="1">
+          <mxGeometry x="520" y="160" width="220" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Infrastructure Steps -->
+        <mxCell id="infra-validate" value="1. Validate Terraform" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="520" y="250" width="440" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-validate-sub" value="• terraform fmt -check&#xa;• terraform validate&#xa;• Checkov security scan" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left" vertex="1" parent="1">
+          <mxGeometry x="540" y="255" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-backend" value="2. Setup S3 Backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="520" y="330" width="440" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-backend-sub" value="• Create S3 bucket (if not exists)&#xa;• Create DynamoDB table for locking&#xa;• Enable versioning &amp; encryption" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left" vertex="1" parent="1">
+          <mxGeometry x="540" y="335" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-plan" value="3. Terraform Plan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="520" y="410" width="440" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-plan-sub" value="• terraform init&#xa;• Import existing resources&#xa;• terraform plan -out=tfplan" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left" vertex="1" parent="1">
+          <mxGeometry x="540" y="415" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-apply" value="4. Terraform Apply" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="520" y="490" width="440" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-apply-sub" value="• terraform apply -auto-approve&#xa;• Deploy infrastructure to AWS&#xa;• Save outputs (ALB URL, etc.)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left" vertex="1" parent="1">
+          <mxGeometry x="540" y="495" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-resources" value="Resources Created:" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;align=left;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="520" y="570" width="440" height="330" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-vpc" value="✓ VPC &amp; Networking (us-east-1, us-west-2)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="600" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-alb" value="✓ Application Load Balancers (Primary + DR)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="625" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-ecs" value="✓ ECS Fargate Clusters (Primary + DR)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="650" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-ecr" value="✓ ECR Repositories (posts, threads, users)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="675" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-dynamodb" value="✓ DynamoDB Global Tables (3 tables x 2 regions)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="700" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-iam" value="✓ IAM Roles &amp; Policies" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="725" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-cw" value="✓ CloudWatch Log Groups" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="750" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-s3" value="✓ S3 Backup Buckets (with cross-region replication)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="775" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-asg" value="✓ Auto Scaling Policies (CPU/Memory based)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="800" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-sg" value="✓ Security Groups &amp; Network ACLs" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="825" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-backup" value="✓ AWS Backup Vaults &amp; Plans" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="850" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="infra-res-nat" value="✓ NAT Gateways (2 per region)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="540" y="875" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Microservices Workflow -->
+        <mxCell id="micro-workflow" value="Microservices Workflow" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;align=left;verticalAlign=top;strokeWidth=2" vertex="1" parent="1">
+          <mxGeometry x="1020" y="120" width="480" height="800" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-trigger" value="Triggers:&#xa;• Service code changes (posts/, threads/, users/)&#xa;• Pull Request to main" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left" vertex="1" parent="1">
+          <mxGeometry x="1040" y="160" width="280" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Change Detection -->
+        <mxCell id="micro-detect" value="1. Detect Changes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1040" y="250" width="440" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-detect-sub" value="• git diff to identify modified services&#xa;• Only build/deploy changed services&#xa;• Parallel execution for efficiency" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left" vertex="1" parent="1">
+          <mxGeometry x="1060" y="255" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Service Pipeline (for each service) -->
+        <mxCell id="service-pipeline" value="For Each Changed Service:" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;align=left;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="1040" y="330" width="440" height="570" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-lint" value="2. Lint Code (ESLint)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="370" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-lint-sub" value="• ESLint with StandardJS style guide&#xa;• Check code quality &amp; formatting" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="375" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-test" value="3. Run Tests (Jest)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="430" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-test-sub" value="• Unit tests with Jest&#xa;• Minimum 80% coverage requirement&#xa;• Generate coverage reports" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="435" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-audit" value="4. Security Audit (npm audit)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="490" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-audit-sub" value="• Check for vulnerable dependencies&#xa;• Report security issues" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="495" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-build" value="5. Build Docker Image" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="550" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-build-sub" value="• Multi-stage Docker build&#xa;• Tag: service-name:commit-sha&#xa;• Optimize layers for caching" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="555" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-scan" value="6. Scan Image (Trivy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="610" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-scan-sub" value="• Scan for CVEs and vulnerabilities&#xa;• Check base image security&#xa;• Report critical/high severity issues" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="615" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-push" value="7. Push to ECR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="670" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-push-sub" value="• Authenticate with ECR&#xa;• Push image to repository&#xa;• Tag as 'latest' if main branch" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="675" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-deploy" value="8. Deploy to ECS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="730" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-deploy-sub" value="• Update ECS task definition&#xa;• Force new deployment&#xa;• Wait for service stability&#xa;• Auto-rollback on failure" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="735" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-verify" value="9. Health Check" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="790" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-verify-sub" value="• ALB health checks (every 30s)&#xa;• Container health checks&#xa;• ECS service events monitoring" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="795" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-notify" value="10. Notification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1060" y="850" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="micro-notify-sub" value="• Comment on commit/PR&#xa;• Update deployment status&#xa;• Send notifications on failure" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;align=left" vertex="1" parent="1">
+          <mxGeometry x="1080" y="855" width="360" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections -->
+        <mxCell id="conn-dev-github" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" edge="1" parent="1" source="developer" target="github-repo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-github-infra" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;fillColor=#fff2cc;strokeColor=#d6b656;" edge="1" parent="1" source="github-repo" target="infra-workflow">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-github-micro" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" edge="1" parent="1" source="github-repo" target="micro-workflow">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="440" y="190" />
+              <mxPoint x="440" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="conn-infra-steps" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;" edge="1" parent="1" source="infra-validate" target="infra-backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-backend-plan" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;" edge="1" parent="1" source="infra-backend" target="infra-plan">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-plan-apply" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" edge="1" parent="1" source="infra-plan" target="infra-apply">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-micro-steps" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;" edge="1" parent="1" source="micro-detect" target="micro-lint">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-lint-test" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;" edge="1" parent="1" source="micro-lint" target="micro-test">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-test-audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;" edge="1" parent="1" source="micro-test" target="micro-audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-audit-build" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" edge="1" parent="1" source="micro-audit" target="micro-build">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-build-scan" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" edge="1" parent="1" source="micro-build" target="micro-scan">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-scan-push" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" edge="1" parent="1" source="micro-scan" target="micro-push">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-push-deploy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="micro-push" target="micro-deploy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-deploy-verify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="micro-deploy" target="micro-verify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-verify-notify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="micro-verify" target="micro-notify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Key Features Box -->
+        <mxCell id="features-box" value="Key Features:&#xa;✓ Separated workflows (infrastructure vs microservices)&#xa;✓ Change detection (only build what changed)&#xa;✓ Parallel execution for efficiency&#xa;✓ Comprehensive testing (lint, unit tests, security)&#xa;✓ Container security scanning&#xa;✓ Automatic rollback on failure&#xa;✓ Multi-region deployment support&#xa;✓ S3 backend state management" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;fontSize=11;fontStyle=0" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="320" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- Legend -->
+        <mxCell id="legend-box" value="Legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;verticalAlign=top;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="540" width="320" height="120" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-validate" value="Validation Steps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="100" y="575" width="120" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-build" value="Build/Deploy Steps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="240" y="575" width="140" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-deploy" value="Deployment Steps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="100" y="615" width="120" height="25" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-check" value="Health/Security Checks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="240" y="615" width="140" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- Success/Failure Indicators -->
+        <mxCell id="success-box" value="✓ On Success:&#xa;• Infrastructure deployed to AWS&#xa;• Services running in ECS&#xa;• Accessible via ALB URL&#xa;• Logs in CloudWatch&#xa;• Metrics in Container Insights" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="700" width="180" height="130" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="failure-box" value="✗ On Failure:&#xa;• Pipeline stops at failed step&#xa;• Automatic rollback (ECS)&#xa;• Notification sent&#xa;• Previous version continues&#xa;• Detailed error logs available" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;verticalAlign=top;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="280" y="700" width="180" height="130" as="geometry" />
+        </mxCell>
+        
+        <!-- Time Estimates -->
+        <mxCell id="time-box" value="Typical Execution Times:&#xa;• Infrastructure: 15-20 minutes&#xa;• Single Service: 3-5 minutes&#xa;• All Services: 8-12 minutes&#xa;• Validation only: 1-2 minutes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="860" width="240" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

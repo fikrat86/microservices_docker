@@ -2,6 +2,8 @@ require('dotenv').config();
 const Koa = require('koa');
 const Router = require('@koa/router');
 const cors = require('@koa/cors');
+const bodyParser = require('koa-bodyparser');
+const { v4: uuidv4 } = require('uuid');
 const db = require('./db.json');
 
 const app = new Koa();
@@ -12,6 +14,9 @@ const SERVICE_NAME = 'users-service';
 
 // CORS middleware
 app.use(cors());
+
+// Body parser middleware
+app.use(bodyParser());
 
 // Request logging middleware
 app.use(async (ctx, next) => {
@@ -45,29 +50,35 @@ router.get('/health', async (ctx) => {
 });
 
 // API endpoints
-router.get('/api/users', async (ctx) => {
+router.get('/', async (ctx) => {
   ctx.body = db.users;
 });
 
-router.get('/api/users/:userId', async (ctx) => {
-  const id = parseInt(ctx.params.userId);
-  ctx.body = db.users.find((user) => user.id == id);
+router.post('/', async (ctx) => {
+  const { username, email, name } = ctx.request.body;
+  const newUser = {
+    userId: uuidv4(),
+    username,
+    email,
+    name,
+    createdAt: new Date().toISOString()
+  };
+  db.users.push(newUser);
+  ctx.status = 201;
+  ctx.body = newUser;
 });
 
-router.get('/api/', async (ctx) => {
-  ctx.body = {
-    message: "Users API ready to receive requests",
-    service: SERVICE_NAME,
-    version: '1.0.0'
-  };
+router.get('/:userId', async (ctx) => {
+  const user = db.users.find((u) => u.userId === ctx.params.userId);
+  if (!user) {
+    ctx.status = 404;
+    ctx.body = { error: 'User not found' };
+    return;
+  }
+  ctx.body = user;
 });
 
-router.get('/', async (ctx) => {
-  ctx.body = {
-    message: "Users service is running",
-    service: SERVICE_NAME
-  };
-});
+
 
 app.use(router.routes());
 app.use(router.allowedMethods());
