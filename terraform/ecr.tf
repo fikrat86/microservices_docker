@@ -57,6 +57,25 @@ resource "aws_ecr_repository" "users" {
   }
 }
 
+# ECR Repository for Gateway (Nginx + Frontend)
+resource "aws_ecr_repository" "gateway" {
+  name                 = "${var.project_name}/gateway"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  tags = {
+    Name    = "${var.project_name}-gateway-ecr-${var.environment}"
+    Service = "gateway"
+  }
+}
+
 # Lifecycle Policy for ECR Repositories (keep last 10 images)
 resource "aws_ecr_lifecycle_policy" "posts" {
   repository = aws_ecr_repository.posts.name
@@ -102,6 +121,27 @@ resource "aws_ecr_lifecycle_policy" "threads" {
 
 resource "aws_ecr_lifecycle_policy" "users" {
   repository = aws_ecr_repository.users.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last 10 images"
+        selection = {
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = 10
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_ecr_lifecycle_policy" "gateway" {
+  repository = aws_ecr_repository.gateway.name
 
   policy = jsonencode({
     rules = [

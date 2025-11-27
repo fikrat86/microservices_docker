@@ -25,6 +25,11 @@ output "ecr_users_repository_url" {
   value       = aws_ecr_repository.users.repository_url
 }
 
+output "ecr_gateway_repository_url" {
+  description = "URL of the Gateway service ECR repository"
+  value       = aws_ecr_repository.gateway.repository_url
+}
+
 output "ecs_cluster_name" {
   description = "Name of the ECS cluster"
   value       = aws_ecs_cluster.main.name
@@ -48,6 +53,11 @@ output "threads_service_name" {
 output "users_service_name" {
   description = "Name of the Users ECS service"
   value       = aws_ecs_service.users.name
+}
+
+output "gateway_service_name" {
+  description = "Name of the Gateway ECS service"
+  value       = aws_ecs_service.gateway.name
 }
 
 output "vpc_id" {

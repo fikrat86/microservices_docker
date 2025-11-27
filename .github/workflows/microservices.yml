@@ -8,6 +8,9 @@ on:
       - 'users/**'
       - 'posts/**'
       - 'threads/**'
+      - 'frontend/**'
+      - 'nginx/**'
+      - 'Dockerfile.nginx'
       - 'shared/**'
       - '.github/workflows/microservices.yml'
   pull_request:
@@ -17,6 +20,9 @@ on:
       - 'users/**'
       - 'posts/**'
       - 'threads/**'
+      - 'frontend/**'
+      - 'nginx/**'
+      - 'Dockerfile.nginx'
       - 'shared/**'
   workflow_dispatch:
 
@@ -32,6 +38,7 @@ jobs:
       users: ${{ steps.changes.outputs.users }}
       posts: ${{ steps.changes.outputs.posts }}
       threads: ${{ steps.changes.outputs.threads }}
+      gateway: ${{ steps.changes.outputs.gateway }}
     
     steps:
       - name: Checkout code
@@ -52,6 +59,11 @@ jobs:
               - 'shared/**'
             threads:
               - 'threads/**'
+              - 'shared/**'
+            gateway:
+              - 'frontend/**'
+              - 'nginx/**'
+              - 'Dockerfile.nginx'
               - 'shared/**'
 
   test-users:
@@ -312,15 +324,58 @@ jobs:
           severity: 'CRITICAL,HIGH'
         continue-on-error: true
 
+  build-gateway:
+    name: Build Gateway Service
+    runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: |
+      needs.detect-changes.outputs.gateway == 'true' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f Dockerfile.nginx -t $ECR_REGISTRY/forum-microservices/gateway:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/forum-microservices/gateway:$IMAGE_TAG $ECR_REGISTRY/forum-microservices/gateway:latest
+          docker push $ECR_REGISTRY/forum-microservices/gateway:$IMAGE_TAG
+          docker push $ECR_REGISTRY/forum-microservices/gateway:latest
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/forum-microservices/gateway:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
   deploy:
     name: Deploy to ECS
     runs-on: ubuntu-latest
-    needs: [build-users, build-posts, build-threads]
+    needs: [build-users, build-posts, build-threads, build-gateway]
     if: |
       always() &&
       (needs.build-users.result == 'success' || needs.build-users.result == 'skipped') &&
       (needs.build-posts.result == 'success' || needs.build-posts.result == 'skipped') &&
       (needs.build-threads.result == 'success' || needs.build-threads.result == 'skipped') &&
+      (needs.build-gateway.result == 'success' || needs.build-gateway.result == 'skipped') &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment:
       name: production
@@ -363,6 +418,11 @@ jobs:
             echo "Updating threads service..."
             aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-threads-dev --force-new-deployment
           fi
+          
+          if [ "${{ needs.detect-changes.outputs.gateway }}" == "true" ]; then
+            echo "Updating gateway service..."
+            aws ecs update-service --cluster $CLUSTER_NAME --service forum-microservices-gateway-service-dev --force-new-deployment
+          fi
 
       - name: Wait for deployment
         run: |
@@ -381,6 +441,11 @@ jobs:
           if [ "${{ needs.detect-changes.outputs.threads }}" == "true" ]; then
             echo "Waiting for threads service..."
             aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-threads-dev
+          fi
+          
+          if [ "${{ needs.detect-changes.outputs.gateway }}" == "true" ]; then
+            echo "Waiting for gateway service..."
+            aws ecs wait services-stable --cluster $CLUSTER_NAME --services forum-microservices-gateway-service-dev
           fi
 
       - name: Deployment summary
@@ -401,5 +466,10 @@ jobs:
             echo "- ✅ Threads Service" >> $GITHUB_STEP_SUMMARY
           fi
           
+          if [ "${{ needs.detect-changes.outputs.gateway }}" == "true" ]; then
+            echo "- ✅ Gateway Service (Frontend Dashboard)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Application URL:** http://${{ steps.get-alb.outputs.alb_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Interactive Dashboard:** http://${{ steps.get-alb.outputs.alb_url }}/" >> $GITHUB_STEP_SUMMARY

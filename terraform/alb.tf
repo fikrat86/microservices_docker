@@ -98,6 +98,33 @@ resource "aws_lb_target_group" "users" {
   }
 }
 
+# Target Group for Gateway (Nginx + Frontend)
+resource "aws_lb_target_group" "gateway" {
+  name        = "forum-ms-gateway-tg-${var.environment}"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    path                = "/health"
+    protocol            = "HTTP"
+    matcher             = "200"
+  }
+
+  deregistration_delay = 30
+
+  tags = {
+    Name    = "${var.project_name}-gateway-tg-${var.environment}"
+    Service = "gateway"
+  }
+}
+
 # HTTP Listener
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
@@ -105,21 +132,8 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type = "fixed-response"
-
-    fixed_response {
-      content_type = "application/json"
-      message_body = jsonencode({
-        status  = "ok"
-        message = "Forum Microservices API"
-        services = [
-          "/api/posts",
-          "/api/threads",
-          "/api/users"
-        ]
-      })
-      status_code = "200"
-    }
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.gateway.arn
   }
 }
 
