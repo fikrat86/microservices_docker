@@ -1,7 +1,7 @@
 # DynamoDB Tables for Forum Microservices
 # Serverless NoSQL database with auto-scaling and global replication
 
-# Users Table (Primary Region)
+# Users Table (Primary Region with Global Table Replica)
 resource "aws_dynamodb_table" "users" {
   name           = "${var.project_name}-users-${var.environment}"
   billing_mode   = "PAY_PER_REQUEST" # On-demand pricing for cost optimization
@@ -24,6 +24,15 @@ resource "aws_dynamodb_table" "users" {
     name            = "EmailIndex"
     hash_key        = "email"
     projection_type = "ALL"
+  }
+
+  # DR Region Replica
+  dynamic "replica" {
+    for_each = var.enable_global_tables ? [1] : []
+    content {
+      region_name = var.dr_region
+      point_in_time_recovery = true
+    }
   }
 
   # Point-in-time recovery for backup
@@ -49,7 +58,7 @@ resource "aws_dynamodb_table" "users" {
   }
 }
 
-# Threads Table (Primary Region)
+# Threads Table (Primary Region with Global Table Replica)
 resource "aws_dynamodb_table" "threads" {
   name           = "${var.project_name}-threads-${var.environment}"
   billing_mode   = "PAY_PER_REQUEST"
@@ -74,6 +83,15 @@ resource "aws_dynamodb_table" "threads" {
     projection_type = "ALL"
   }
 
+  # DR Region Replica
+  dynamic "replica" {
+    for_each = var.enable_global_tables ? [1] : []
+    content {
+      region_name = var.dr_region
+      point_in_time_recovery = true
+    }
+  }
+
   point_in_time_recovery {
     enabled = true
   }
@@ -93,7 +111,7 @@ resource "aws_dynamodb_table" "threads" {
   }
 }
 
-# Posts Table (Primary Region)
+# Posts Table (Primary Region with Global Table Replica)
 resource "aws_dynamodb_table" "posts" {
   name           = "${var.project_name}-posts-${var.environment}"
   billing_mode   = "PAY_PER_REQUEST"
@@ -136,6 +154,15 @@ resource "aws_dynamodb_table" "posts" {
     hash_key        = "userId"
     range_key       = "createdAt"
     projection_type = "ALL"
+  }
+
+  # DR Region Replica
+  dynamic "replica" {
+    for_each = var.enable_global_tables ? [1] : []
+    content {
+      region_name = var.dr_region
+      point_in_time_recovery = true
+    }
   }
 
   point_in_time_recovery {
