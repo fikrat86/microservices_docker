@@ -163,6 +163,7 @@ resource "aws_dynamodb_table" "posts_replica" {
 
 resource "aws_dynamodb_table_replica" "users_global" {
   count            = var.enable_global_tables ? 1 : 0
+  provider         = aws.dr
   global_table_arn = aws_dynamodb_table.users.arn
   
   tags = {
@@ -178,6 +179,7 @@ resource "aws_dynamodb_table_replica" "users_global" {
 
 resource "aws_dynamodb_table_replica" "threads_global" {
   count            = var.enable_global_tables ? 1 : 0
+  provider         = aws.dr
   global_table_arn = aws_dynamodb_table.threads.arn
   
   tags = {
@@ -193,6 +195,7 @@ resource "aws_dynamodb_table_replica" "threads_global" {
 
 resource "aws_dynamodb_table_replica" "posts_global" {
   count            = var.enable_global_tables ? 1 : 0
+  provider         = aws.dr
   global_table_arn = aws_dynamodb_table.posts.arn
   
   tags = {

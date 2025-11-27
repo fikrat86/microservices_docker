@@ -229,6 +229,10 @@ resource "aws_s3_bucket_replication_configuration" "backup" {
       prefix = ""
     }
 
+    delete_marker_replication {
+      status = "Enabled"
+    }
+
     destination {
       bucket        = aws_s3_bucket.dr_backup.arn
       storage_class = "STANDARD"
