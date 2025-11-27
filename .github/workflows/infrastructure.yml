@@ -24,6 +24,11 @@ on:
           - apply
           - destroy
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
 env:
   AWS_REGION: us-east-1
   TERRAFORM_VERSION: 1.5.0
