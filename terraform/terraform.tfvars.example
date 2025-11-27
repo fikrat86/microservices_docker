@@ -11,6 +11,11 @@ project_name = "forum-microservices"
 # Set to true only if you need multi-region disaster recovery
 enable_global_tables = false
 
+# IMPORTANT: Set to false to avoid DR region issues
+# DR region requires ECR repositories and images in us-west-2
+# Enable only if you have a complete multi-region setup
+enable_dr = false
+
 # VPC Configuration
 vpc_cidr = "10.0.0.0/16"
 availability_zones = ["us-east-1a", "us-east-1b"]
