@@ -177,7 +177,7 @@ resource "aws_iam_role" "replication" {
 
 # S3 Replication Policy
 resource "aws_iam_role_policy" "replication" {
-  count = var.enable_cross_region_backup ? 1 : 0
+  count = var.enable_cross_region_backup && var.enable_dr ? 1 : 0
   name  = "${var.project_name}-s3-replication-policy-${var.environment}"
   role  = aws_iam_role.replication[0].id
 
@@ -212,9 +212,9 @@ resource "aws_iam_role_policy" "replication" {
           "s3:ReplicateTags"
         ]
         Effect = "Allow"
-        Resource = var.enable_dr ? [
+        Resource = [
           "${aws_s3_bucket.dr_backup[0].arn}/*"
-        ] : []
+        ]
       }
     ]
   })
