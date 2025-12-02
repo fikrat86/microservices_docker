@@ -58,7 +58,7 @@ jobs:
 
       - name: Terraform Validate
         working-directory: ./terraform
-        run: terraform validate
+        run: terraform validate -no-color
 
   terraform-plan:
     name: Terraform Plan
@@ -154,26 +154,6 @@ jobs:
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
-
-      - name: Clean Orphaned DR Resources from State
-        working-directory: ./terraform
-        run: |
-          # Remove orphaned DR resources that no longer have provider configuration
-          terraform state rm 'aws_dynamodb_table.users_replica' 2>/dev/null || true
-          terraform state rm 'aws_dynamodb_table.posts_replica' 2>/dev/null || true
-          terraform state rm 'aws_dynamodb_table.threads_replica' 2>/dev/null || true
-          terraform state rm 'aws_dynamodb_table_replica.users_global' 2>/dev/null || true
-          terraform state rm 'aws_dynamodb_table_replica.posts_global' 2>/dev/null || true
-          terraform state rm 'aws_dynamodb_table_replica.threads_global' 2>/dev/null || true
-          terraform state rm 'aws_s3_bucket.dr_backup' 2>/dev/null || true
-          terraform state rm 'aws_s3_bucket_versioning.dr_backup' 2>/dev/null || true
-          terraform state rm 'aws_s3_bucket_lifecycle_configuration.dr_backup' 2>/dev/null || true
-          terraform state rm 'aws_s3_bucket_public_access_block.dr_backup' 2>/dev/null || true
-          terraform state rm 'aws_s3_bucket_server_side_encryption_configuration.dr_backup' 2>/dev/null || true
-          terraform state rm 'aws_backup_vault.dr_dynamodb_backup' 2>/dev/null || true
-          terraform state rm 'aws_cloudwatch_metric_alarm.dr_users_table_throttles' 2>/dev/null || true
-          echo "State cleanup completed"
-        continue-on-error: true
 
       - name: Import Existing Resources
         working-directory: ./terraform
