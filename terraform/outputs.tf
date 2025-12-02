@@ -89,29 +89,16 @@ output "service_endpoints" {
   }
 }
 
-# DR Region Outputs
-output "dr_alb_dns_name" {
-  description = "DNS name of the DR Application Load Balancer"
-  value       = aws_lb.dr.dns_name
+# DR Region Outputs (currently not implemented - would require DR ALB and ECS resources)
+# These outputs are placeholders for future DR infrastructure implementation
+output "dr_enabled" {
+  description = "Whether DR is enabled"
+  value       = var.enable_dr
 }
 
-output "dr_alb_url" {
-  description = "URL of the DR Application Load Balancer"
-  value       = "http://${aws_lb.dr.dns_name}"
-}
-
-output "dr_service_endpoints" {
-  description = "DR service endpoints for testing"
-  value = {
-    posts   = "http://${aws_lb.dr.dns_name}/api/posts"
-    threads = "http://${aws_lb.dr.dns_name}/api/threads"
-    users   = "http://${aws_lb.dr.dns_name}/api/users"
-  }
-}
-
-output "dr_ecs_cluster_name" {
-  description = "Name of the DR ECS cluster"
-  value       = aws_ecs_cluster.dr.name
+output "dr_region" {
+  description = "DR region configured"
+  value       = var.enable_dr ? var.dr_region : "DR disabled"
 }
 
 output "backup_bucket_name" {
