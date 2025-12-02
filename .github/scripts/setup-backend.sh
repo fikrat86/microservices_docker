@@ -4,8 +4,8 @@
 
 set -e
 
-BUCKET_NAME="forum-microservices-terraform-state-dev"
-TABLE_NAME="forum-microservices-terraform-locks"
+BUCKET_NAME="forum-microservices-terraform-state-dev-v2"
+TABLE_NAME="forum-microservices-terraform-locks-v2"
 REGION="us-east-1"
 
 echo "=== Setting up Terraform Backend ==="

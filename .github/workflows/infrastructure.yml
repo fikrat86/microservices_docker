@@ -94,7 +94,13 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: |
+          terraform init -reconfigure \
+            -backend-config="bucket=forum-microservices-terraform-state-dev-v2" \
+            -backend-config="key=infrastructure/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="encrypt=true" \
+            -backend-config="dynamodb_table=forum-microservices-terraform-locks-v2"
 
       - name: Terraform Plan
         working-directory: ./terraform
@@ -154,7 +160,13 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: |
+          terraform init -reconfigure \
+            -backend-config="bucket=forum-microservices-terraform-state-dev-v2" \
+            -backend-config="key=infrastructure/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="encrypt=true" \
+            -backend-config="dynamodb_table=forum-microservices-terraform-locks-v2"
 
       - name: Import Existing Resources
         working-directory: ./terraform
@@ -162,6 +174,16 @@ jobs:
           chmod +x ../.github/scripts/import-existing-resources.sh
           ../.github/scripts/import-existing-resources.sh
         continue-on-error: true
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: |
+          terraform init -reconfigure \
+            -backend-config="bucket=forum-microservices-terraform-state-dev-v2" \
+            -backend-config="key=infrastructure/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="encrypt=true" \
+            -backend-config="dynamodb_table=forum-microservices-terraform-locks-v2"
 
       - name: Terraform Apply
         working-directory: ./terraform
@@ -223,7 +245,13 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: |
+          terraform init -reconfigure \
+            -backend-config="bucket=forum-microservices-terraform-state-dev-v2" \
+            -backend-config="key=infrastructure/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="encrypt=true" \
+            -backend-config="dynamodb_table=forum-microservices-terraform-locks-v2"
 
       - name: Terraform Destroy
         working-directory: ./terraform
