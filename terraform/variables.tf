@@ -112,13 +112,13 @@ variable "github_token_secret_arn" {
 variable "enable_dr" {
   description = "Enable disaster recovery in secondary region"
   type        = bool
-  default     = true
+  default     = false  # Set to true and add DR provider to main.tf to enable
 }
 
 variable "dr_region" {
   description = "AWS region for disaster recovery"
   type        = string
-  default     = "us-west-2"
+  default     = "us-east-2"  # Changed from us-west-2 to us-east-2 (Ohio)
 }
 
 variable "dr_vpc_cidr" {

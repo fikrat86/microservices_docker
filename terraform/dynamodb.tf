@@ -286,15 +286,16 @@ resource "aws_backup_plan" "dynamodb_backup_plan" {
       delete_after = 30 # Keep backups for 30 days
     }
 
-    /* DR copy disabled - requires DR provider
-    copy_action {
-      destination_vault_arn = aws_backup_vault.dr_dynamodb_backup.arn
+    dynamic "copy_action" {
+      for_each = var.enable_dr ? [1] : []
+      content {
+        destination_vault_arn = aws_backup_vault.dr_dynamodb_backup[0].arn
 
-      lifecycle {
-        delete_after = 30
+        lifecycle {
+          delete_after = 30
+        }
       }
     }
-    */
   }
 
   tags = {
@@ -303,8 +304,7 @@ resource "aws_backup_plan" "dynamodb_backup_plan" {
   }
 }
 
-# Backup vault in DR region - DISABLED (requires DR provider)
-/*
+# Backup vault in DR region
 resource "aws_backup_vault" "dr_dynamodb_backup" {
   count    = var.enable_dr ? 1 : 0
   provider = aws.dr
@@ -315,7 +315,7 @@ resource "aws_backup_vault" "dr_dynamodb_backup" {
     Environment = "${var.environment}-dr"
   }
 }
-*/
+
 
 
 # Backup selection for DynamoDB tables

@@ -119,9 +119,8 @@ output "backup_bucket_name" {
   value       = aws_s3_bucket.backup.id
 }
 
-/* DR outputs disabled
 output "dr_backup_bucket_name" {
   description = "Name of the DR S3 bucket for database backups"
-  value       = aws_s3_bucket.dr_backup.id
+  value       = var.enable_dr ? aws_s3_bucket.dr_backup[0].id : "DR disabled"
 }
-*/
+

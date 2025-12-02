@@ -33,3 +33,20 @@ provider "aws" {
     }
   }
 }
+
+# DR Provider - Uncomment and set enable_dr=true to enable disaster recovery
+# Uses us-east-2 (Ohio) for geographic diversity from us-east-1 (Virginia)
+provider "aws" {
+  alias  = "dr"
+  region = var.dr_region
+
+  default_tags {
+    tags = {
+      Project     = var.project_name
+      Environment = "${var.environment}-dr"
+      ManagedBy   = "Terraform"
+      Owner       = "DevOps-Team"
+      DRRegion    = "true"
+    }
+  }
+}
