@@ -68,6 +68,11 @@ router.get('/api/users', async (ctx) => {
   ctx.body = db.users;
 });
 
+// Direct route (without /api prefix)
+router.get('/users', async (ctx) => {
+  ctx.body = db.users;
+});
+
 router.post('/', async (ctx) => {
   const { username, email, name } = ctx.request.body;
   const newUser = {
@@ -96,6 +101,20 @@ router.post('/api/users', async (ctx) => {
   ctx.body = newUser;
 });
 
+router.post('/users', async (ctx) => {
+  const { username, email, name } = ctx.request.body;
+  const newUser = {
+    userId: uuidv4(),
+    username,
+    email,
+    name,
+    createdAt: new Date().toISOString()
+  };
+  db.users.push(newUser);
+  ctx.status = 201;
+  ctx.body = newUser;
+});
+
 router.get('/:userId', async (ctx) => {
   const user = db.users.find((u) => u.userId === ctx.params.userId);
   if (!user) {
@@ -107,6 +126,16 @@ router.get('/:userId', async (ctx) => {
 });
 
 router.get('/api/users/:userId', async (ctx) => {
+  const user = db.users.find((u) => u.userId === ctx.params.userId);
+  if (!user) {
+    ctx.status = 404;
+    ctx.body = { error: 'User not found' };
+    return;
+  }
+  ctx.body = user;
+});
+
+router.get('/users/:userId', async (ctx) => {
   const user = db.users.find((u) => u.userId === ctx.params.userId);
   if (!user) {
     ctx.status = 404;

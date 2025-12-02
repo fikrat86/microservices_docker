@@ -68,6 +68,11 @@ router.get('/api/posts', async (ctx) => {
   ctx.body = db.posts;
 });
 
+// Direct route (without /api prefix)
+router.get('/posts', async (ctx) => {
+  ctx.body = db.posts;
+});
+
 router.post('/', async (ctx) => {
   const { userId, threadId, content } = ctx.request.body;
   const newPost = {
@@ -96,6 +101,20 @@ router.post('/api/posts', async (ctx) => {
   ctx.body = newPost;
 });
 
+router.post('/posts', async (ctx) => {
+  const { userId, threadId, content } = ctx.request.body;
+  const newPost = {
+    postId: uuidv4(),
+    userId,
+    threadId,
+    content,
+    createdAt: new Date().toISOString()
+  };
+  db.posts.push(newPost);
+  ctx.status = 201;
+  ctx.body = newPost;
+});
+
 router.get('/:postId', async (ctx) => {
   const post = db.posts.find((p) => p.postId === ctx.params.postId);
   if (!post) {
@@ -107,6 +126,16 @@ router.get('/:postId', async (ctx) => {
 });
 
 router.get('/api/posts/:postId', async (ctx) => {
+  const post = db.posts.find((p) => p.postId === ctx.params.postId);
+  if (!post) {
+    ctx.status = 404;
+    ctx.body = { error: 'Post not found' };
+    return;
+  }
+  ctx.body = post;
+});
+
+router.get('/posts/:postId', async (ctx) => {
   const post = db.posts.find((p) => p.postId === ctx.params.postId);
   if (!post) {
     ctx.status = 404;

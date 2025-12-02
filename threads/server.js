@@ -68,6 +68,11 @@ router.get('/api/threads', async (ctx) => {
   ctx.body = db.threads;
 });
 
+// Direct route (without /api prefix)
+router.get('/threads', async (ctx) => {
+  ctx.body = db.threads;
+});
+
 router.post('/', async (ctx) => {
   const { userId, title, category } = ctx.request.body;
   const newThread = {
@@ -83,6 +88,20 @@ router.post('/', async (ctx) => {
 });
 
 router.post('/api/threads', async (ctx) => {
+  const { userId, title, category } = ctx.request.body;
+  const newThread = {
+    threadId: uuidv4(),
+    userId,
+    title,
+    category: category || 'general',
+    createdAt: new Date().toISOString()
+  };
+  db.threads.push(newThread);
+  ctx.status = 201;
+  ctx.body = newThread;
+});
+
+router.post('/threads', async (ctx) => {
   const { userId, title, category } = ctx.request.body;
   const newThread = {
     threadId: uuidv4(),
