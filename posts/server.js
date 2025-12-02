@@ -7,9 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('./db.json');
 
 const app = new Koa();
-const router = new Router({
-  prefix: '/api/posts'
-});
+const router = new Router();
 
 const PORT = process.env.PORT || 3000;
 const SERVICE_NAME = 'posts-service';
@@ -51,8 +49,22 @@ router.get('/health', async (ctx) => {
   };
 });
 
+// Health check endpoint (for API calls through ALB)
+router.get('/api/posts/health', async (ctx) => {
+  ctx.body = {
+    status: 'healthy',
+    service: SERVICE_NAME,
+    timestamp: new Date().toISOString()
+  };
+});
+
 // API endpoints
 router.get('/', async (ctx) => {
+  ctx.body = db.posts;
+});
+
+// API endpoint (through ALB path-based routing)
+router.get('/api/posts', async (ctx) => {
   ctx.body = db.posts;
 });
 
@@ -70,7 +82,31 @@ router.post('/', async (ctx) => {
   ctx.body = newPost;
 });
 
+router.post('/api/posts', async (ctx) => {
+  const { userId, threadId, content } = ctx.request.body;
+  const newPost = {
+    postId: uuidv4(),
+    userId,
+    threadId,
+    content,
+    createdAt: new Date().toISOString()
+  };
+  db.posts.push(newPost);
+  ctx.status = 201;
+  ctx.body = newPost;
+});
+
 router.get('/:postId', async (ctx) => {
+  const post = db.posts.find((p) => p.postId === ctx.params.postId);
+  if (!post) {
+    ctx.status = 404;
+    ctx.body = { error: 'Post not found' };
+    return;
+  }
+  ctx.body = post;
+});
+
+router.get('/api/posts/:postId', async (ctx) => {
   const post = db.posts.find((p) => p.postId === ctx.params.postId);
   if (!post) {
     ctx.status = 404;

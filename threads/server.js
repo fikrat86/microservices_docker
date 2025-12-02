@@ -7,9 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('./db.json');
 
 const app = new Koa();
-const router = new Router({
-  prefix: '/api/threads'
-});
+const router = new Router();
 
 const PORT = process.env.PORT || 3000;
 const SERVICE_NAME = 'threads-service';
@@ -51,8 +49,22 @@ router.get('/health', async (ctx) => {
   };
 });
 
+// Health check endpoint (for API calls through ALB)
+router.get('/api/threads/health', async (ctx) => {
+  ctx.body = {
+    status: 'healthy',
+    service: SERVICE_NAME,
+    timestamp: new Date().toISOString()
+  };
+});
+
 // API endpoints
 router.get('/', async (ctx) => {
+  ctx.body = db.threads;
+});
+
+// API endpoint (through ALB path-based routing)
+router.get('/api/threads', async (ctx) => {
   ctx.body = db.threads;
 });
 
@@ -70,7 +82,31 @@ router.post('/', async (ctx) => {
   ctx.body = newThread;
 });
 
+router.post('/api/threads', async (ctx) => {
+  const { userId, title, category } = ctx.request.body;
+  const newThread = {
+    threadId: uuidv4(),
+    userId,
+    title,
+    category: category || 'general',
+    createdAt: new Date().toISOString()
+  };
+  db.threads.push(newThread);
+  ctx.status = 201;
+  ctx.body = newThread;
+});
+
 router.get('/:threadId', async (ctx) => {
+  const thread = db.threads.find((t) => t.threadId === ctx.params.threadId);
+  if (!thread) {
+    ctx.status = 404;
+    ctx.body = { error: 'Thread not found' };
+    return;
+  }
+  ctx.body = thread;
+});
+
+router.get('/api/threads/:threadId', async (ctx) => {
   const thread = db.threads.find((t) => t.threadId === ctx.params.threadId);
   if (!thread) {
     ctx.status = 404;
