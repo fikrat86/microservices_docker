@@ -42,7 +42,15 @@ resource "aws_security_group" "ecs_tasks" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "Traffic from ALB"
+    description     = "HTTP traffic from ALB for gateway"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  ingress {
+    description     = "Traffic from ALB for microservices"
     from_port       = 3000
     to_port         = 3000
     protocol        = "tcp"
@@ -50,9 +58,17 @@ resource "aws_security_group" "ecs_tasks" {
   }
 
   ingress {
-    description = "Allow inter-service communication"
+    description = "Allow inter-service communication on port 3000"
     from_port   = 3000
     to_port     = 3000
+    protocol    = "tcp"
+    self        = true
+  }
+
+  ingress {
+    description = "Allow inter-service communication on port 80"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     self        = true
   }
