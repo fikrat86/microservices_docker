@@ -80,8 +80,11 @@ resource "aws_s3_bucket_public_access_block" "backup" {
   restrict_public_buckets = true
 }
 
-# DR S3 Bucket for Database Backups (DR Region)
+# DR S3 Bucket for Database Backups (DR Region) - DISABLED
+# Uncomment and add DR provider to main.tf to enable
+/*
 resource "aws_s3_bucket" "dr_backup" {
+  count    = var.enable_dr ? 1 : 0
   provider = aws.dr
   bucket   = "${var.project_name}-db-backups-${var.environment}-dr-${data.aws_caller_identity.current.account_id}"
 
@@ -94,8 +97,9 @@ resource "aws_s3_bucket" "dr_backup" {
 
 # DR Backup bucket versioning
 resource "aws_s3_bucket_versioning" "dr_backup" {
+  count    = var.enable_dr ? 1 : 0
   provider = aws.dr
-  bucket   = aws_s3_bucket.dr_backup.id
+  bucket   = aws_s3_bucket.dr_backup[0].id
 
   versioning_configuration {
     status = "Enabled"
@@ -104,8 +108,9 @@ resource "aws_s3_bucket_versioning" "dr_backup" {
 
 # DR Backup bucket encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "dr_backup" {
+  count    = var.enable_dr ? 1 : 0
   provider = aws.dr
-  bucket   = aws_s3_bucket.dr_backup.id
+  bucket   = aws_s3_bucket.dr_backup[0].id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -116,8 +121,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dr_backup" {
 
 # DR Backup bucket lifecycle
 resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
+  count    = var.enable_dr ? 1 : 0
   provider = aws.dr
-  bucket   = aws_s3_bucket.dr_backup.id
+  bucket   = aws_s3_bucket.dr_backup[0].id
 
   rule {
     id     = "delete-old-backups"
@@ -139,14 +145,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
 
 # Block public access on DR bucket
 resource "aws_s3_bucket_public_access_block" "dr_backup" {
+  count    = var.enable_dr ? 1 : 0
   provider = aws.dr
-  bucket   = aws_s3_bucket.dr_backup.id
+  bucket   = aws_s3_bucket.dr_backup[0].id
 
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+*/
+
 
 # S3 Replication Role
 resource "aws_iam_role" "replication" {
@@ -197,6 +206,7 @@ resource "aws_iam_role_policy" "replication" {
           "${aws_s3_bucket.backup.arn}/*"
         ]
       },
+      /* DR replication disabled
       {
         Action = [
           "s3:ReplicateObject",
@@ -208,11 +218,13 @@ resource "aws_iam_role_policy" "replication" {
           "${aws_s3_bucket.dr_backup.arn}/*"
         ]
       }
+      */
     ]
   })
 }
 
-# S3 Replication Configuration
+# S3 Replication Configuration - DISABLED (requires DR provider)
+/*
 resource "aws_s3_bucket_replication_configuration" "backup" {
   count = var.enable_cross_region_backup ? 1 : 0
 
@@ -239,6 +251,8 @@ resource "aws_s3_bucket_replication_configuration" "backup" {
     }
   }
 }
+*/
+
 
 # Data source for current AWS account
 data "aws_caller_identity" "current" {}
