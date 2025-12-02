@@ -7,7 +7,9 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('./db.json');
 
 const app = new Koa();
-const router = new Router();
+const router = new Router({
+  prefix: '/api/posts'
+});
 
 const PORT = process.env.PORT || 3000;
 const SERVICE_NAME = 'posts-service';
