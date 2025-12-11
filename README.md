@@ -1,4 +1,4 @@
-# Forum Microservices - DevOps Solutions Project
+# Forum Microservices - DevOps Solutions Project updated
 
 A complete microservices-based forum application deployed on AWS using Infrastructure as Code (Terraform), containerized with Docker, orchestrated with ECS Fargate, and automated with CI/CD pipelines.
 
