@@ -410,6 +410,6 @@ If you encounter issues not covered in this guide:
 
 ## Related Documentation
 
-- [README.md](../README.md) - Main project documentation
-- [DEPLOYMENT_CHECKLIST.md](../DEPLOYMENT_CHECKLIST.md) - Deployment guide
-- [terraform/](../terraform/) - Terraform configuration files
+- [README.md](README.md) - Main project documentation
+- [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) - Deployment guide
+- [terraform/](terraform/) - Terraform configuration files

@@ -18,6 +18,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Configuration variables (can be overridden via environment variables)
+$script:TerraformDir = if ($env:TERRAFORM_DIR) { $env:TERRAFORM_DIR } else { Join-Path $PSScriptRoot "..\terraform" }
+$script:StateBucketPrefix = if ($env:STATE_BUCKET_PREFIX) { $env:STATE_BUCKET_PREFIX } else { "forum-microservices-terraform-state" }
+$script:LockTableName = if ($env:LOCK_TABLE_NAME) { $env:LOCK_TABLE_NAME } else { "forum-microservices-terraform-locks" }
+
 # Function to print colored messages
 function Write-Header {
     param([string]$Message)
@@ -126,7 +131,7 @@ function Main {
     Write-Header "Terraform Destroy - AWS Resources"
     
     Write-Info "Environment: $Environment"
-    Write-Info "Terraform Directory: $PSScriptRoot\..\terraform"
+    Write-Info "Terraform Directory: $script:TerraformDir"
     if ($DryRun) {
         Write-Warning-Message "DRY RUN MODE - No resources will be destroyed"
     }
@@ -136,13 +141,12 @@ function Main {
     Test-Prerequisites
     
     # Change to terraform directory
-    $terraformDir = Join-Path $PSScriptRoot "..\terraform"
-    if (-not (Test-Path $terraformDir)) {
-        Write-Error-Message "Terraform directory not found: $terraformDir"
+    if (-not (Test-Path $script:TerraformDir)) {
+        Write-Error-Message "Terraform directory not found: $script:TerraformDir"
         exit 1
     }
     
-    Push-Location $terraformDir
+    Push-Location $script:TerraformDir
     
     try {
         # Initialize Terraform
@@ -208,14 +212,14 @@ function Main {
             Write-Success "All Terraform-managed resources have been destroyed"
             Write-Host ""
             Write-Info "Note: The following may still exist and require manual cleanup:"
-            Write-Host "  - S3 bucket: forum-microservices-terraform-state-$Environment"
-            Write-Host "  - DynamoDB table: forum-microservices-terraform-locks"
+            Write-Host "  - S3 bucket: $script:StateBucketPrefix-$Environment"
+            Write-Host "  - DynamoDB table: $script:LockTableName"
             Write-Host "  - ECR repositories (if force delete was not enabled)"
             Write-Host "  - CloudWatch log groups"
             Write-Host ""
             Write-Info "To remove the Terraform state backend, run:"
-            Write-Host "  aws s3 rb s3://forum-microservices-terraform-state-$Environment --force"
-            Write-Host "  aws dynamodb delete-table --table-name forum-microservices-terraform-locks"
+            Write-Host "  aws s3 rb s3://$script:StateBucketPrefix-$Environment --force"
+            Write-Host "  aws dynamodb delete-table --table-name $script:LockTableName"
             Write-Host ""
         } else {
             Write-Error-Message "Terraform destroy failed"

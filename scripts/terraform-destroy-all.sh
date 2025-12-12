@@ -13,7 +13,11 @@ NC='\033[0m' # No Color
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TERRAFORM_DIR="$SCRIPT_DIR/../terraform"
+TERRAFORM_DIR="${TERRAFORM_DIR:-$SCRIPT_DIR/../terraform}"
+
+# Resource names (can be overridden via environment variables)
+STATE_BUCKET_PREFIX="${STATE_BUCKET_PREFIX:-forum-microservices-terraform-state}"
+LOCK_TABLE_NAME="${LOCK_TABLE_NAME:-forum-microservices-terraform-locks}"
 
 # Default values
 ENVIRONMENT="${ENVIRONMENT:-dev}"
@@ -212,14 +216,14 @@ main() {
         print_success "All Terraform-managed resources have been destroyed"
         echo ""
         print_info "Note: The following may still exist and require manual cleanup:"
-        echo "  - S3 bucket: forum-microservices-terraform-state-$ENVIRONMENT"
-        echo "  - DynamoDB table: forum-microservices-terraform-locks"
+        echo "  - S3 bucket: ${STATE_BUCKET_PREFIX}-$ENVIRONMENT"
+        echo "  - DynamoDB table: $LOCK_TABLE_NAME"
         echo "  - ECR repositories (if force delete was not enabled)"
         echo "  - CloudWatch log groups"
         echo ""
         print_info "To remove the Terraform state backend, run:"
-        echo "  aws s3 rb s3://forum-microservices-terraform-state-$ENVIRONMENT --force"
-        echo "  aws dynamodb delete-table --table-name forum-microservices-terraform-locks"
+        echo "  aws s3 rb s3://${STATE_BUCKET_PREFIX}-$ENVIRONMENT --force"
+        echo "  aws dynamodb delete-table --table-name $LOCK_TABLE_NAME"
         echo ""
     else
         print_error "Terraform destroy failed"
