@@ -1890,6 +1890,36 @@ aws logs tail /ecs/forum-microservices-dev --follow --filter-pattern "ERROR"
 
 To destroy all resources and avoid charges:
 
+> 📘 **For comprehensive destruction instructions, see [DESTROY_GUIDE.md](DESTROY_GUIDE.md)**
+
+### Quick Destroy
+
+Use the dedicated destruction scripts for the safest and most reliable cleanup:
+
+**Linux/macOS:**
+```bash
+# Dry run first (see what will be destroyed)
+./scripts/terraform-destroy-all.sh --dry-run
+
+# Destroy with confirmation
+./scripts/terraform-destroy-all.sh --environment dev
+
+# Destroy without confirmation (use with caution!)
+./scripts/terraform-destroy-all.sh --environment dev --auto-approve
+```
+
+**Windows (PowerShell):**
+```powershell
+# Dry run first (see what will be destroyed)
+.\scripts\terraform-destroy-all.ps1 -DryRun
+
+# Destroy with confirmation
+.\scripts\terraform-destroy-all.ps1 -Environment dev
+
+# Destroy without confirmation (use with caution!)
+.\scripts\terraform-destroy-all.ps1 -Environment dev -AutoApprove
+```
+
 ### Option 1: Using GitHub Actions (Recommended)
 
 ```
