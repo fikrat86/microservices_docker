@@ -18,6 +18,7 @@ Welcome to the Forum Microservices DevOps Solutions Project! This index will hel
 | **[README.md](README.md)** | Complete project documentation with setup instructions, deployment guide, and troubleshooting | First - comprehensive overview |
 | **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** | Executive summary of what was built and requirements fulfillment | For quick project understanding |
 | **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** | Step-by-step deployment checklist with verification steps | During deployment |
+| **[DESTROY_GUIDE.md](DESTROY_GUIDE.md)** | Complete guide for safely destroying all AWS resources created by Terraform | When cleaning up infrastructure |
 
 ### Technical Documentation
 

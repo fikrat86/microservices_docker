@@ -94,6 +94,9 @@ switch ($Action) {
     'destroy' {
         Write-Host "WARNING: This will destroy all infrastructure!" -ForegroundColor Red
         Write-Host ""
+        Write-Host "For comprehensive destruction instructions, see DESTROY_GUIDE.md" -ForegroundColor Cyan
+        Write-Host "Or use the dedicated script: .\terraform-destroy-all.ps1" -ForegroundColor Cyan
+        Write-Host ""
         
         if ($AutoApprove) {
             terraform destroy -var="environment=$Environment" -auto-approve
@@ -103,6 +106,14 @@ switch ($Action) {
         
         Write-Host ""
         Write-Host "Infrastructure destroyed" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Note: Some resources may require manual cleanup:" -ForegroundColor Yellow
+        Write-Host "  - S3 state bucket: forum-microservices-terraform-state-$Environment" -ForegroundColor Gray
+        Write-Host "  - DynamoDB lock table: forum-microservices-terraform-locks" -ForegroundColor Gray
+        Write-Host "  - CloudWatch log groups" -ForegroundColor Gray
+        Write-Host "  - ECR repositories (if not force-deleted)" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "See DESTROY_GUIDE.md for post-destruction cleanup steps" -ForegroundColor Cyan
     }
     
     'output' {
